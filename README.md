@@ -21,7 +21,9 @@ A simple website that works out how many calories you should eat each day to los
 3. After a minute or two, GitHub shows your website's address, which looks like `https://kyriakoss99.github.io/calorie-tracker/`.
 4. Open that address on your phone. To make it feel like an app:
    - **iPhone (Safari):** tap the Share button, then **Add to Home Screen**.
-   - **Android (Chrome):** tap the ⋮ menu, then **Add to Home screen**.
+   - **Android (Chrome):** tap the ⋮ menu, then **Add to Home screen** (or **Install app**).
+
+   It then opens full screen with its own icon, like a normal app, and keeps working without an internet connection.
 
 ## Where your data is kept
 
