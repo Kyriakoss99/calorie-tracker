@@ -10,6 +10,14 @@ A simple website that works out how many calories you should eat each day to los
 4. **One-tap re-adding.** Foods you've logged before appear as buttons, so you can add your usual breakfast in one tap. Typing a food you've had before fills in its calories for you.
 5. **Settings.** Change your goal by hand, redo the questionnaire as your weight drops, or save and restore a backup file.
 
+## Talking to it
+
+Under **What did you eat?**, tap **Talk** and say what you had, for example "two eggs, a slice of toast with butter and a coffee with milk", or just type it. It recognises about 150 common foods, your regular meals and anything you've logged before, and shows the calories for you to check before adding. Foods it doesn't know yet are listed with an empty box: type the calories once and it remembers them next time. Tick **Remember this as a regular meal** to add the whole meal in one tap later.
+
+Talking uses your phone browser's own free speech-to-text (Chrome on Android works best). If the Talk button doesn't appear, use the microphone on your phone's keyboard instead.
+
+A smarter version that also understands photos and any dish, powered by Claude, runs inside Claude (see the project thread).
+
 ## How to open it
 
 **On your computer:** download `index.html` from this repository and double-click it. It opens in your web browser. No installation is needed.
