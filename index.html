@@ -70,7 +70,6 @@ body {
   color: var(--text);
   font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   -webkit-text-size-adjust: 100%;
-  padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
 }
 main { max-width: 520px; margin: 0 auto; padding-block: 16px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 h1 { font-size: 1.5rem; margin: 8px 0 4px; }
@@ -87,6 +86,7 @@ p { margin: 0 0 12px; }
   box-shadow: var(--shadow);
 }
 .hidden { display: none !important; }
+[hidden] { display: none !important; }
 
 /* Forms */
 label { display: block; font-weight: 600; margin: 14px 0 6px; }
@@ -180,11 +180,74 @@ button {
 .quick button b { font-weight: 600; }
 
 footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 24px; }
+
+/* ---- Assistant ---- */
+.assist textarea {
+  width: 100%;
+  font: inherit;
+  font-size: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 84px;
+  resize: vertical;
+}
+.assist textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+.tools { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.tool {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--line);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+.tool svg { width: 20px; height: 20px; flex: none; }
+.tool.live { background: var(--warn-soft); border-color: var(--warn); color: var(--text); }
+.tool.live .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--warn); animation: pulse 1s infinite; }
+@keyframes pulse { 50% { opacity: .3; } }
+@media (prefers-reduced-motion: reduce) { .tool.live .dot { animation: none; } }
+.thumbs { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.thumb { position: relative; width: 72px; height: 72px; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); }
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.thumb button { position: absolute; top: 2px; right: 2px; min-height: 0; width: 24px; height: 24px; padding: 0; border-radius: 50%; background: rgba(0,0,0,.6); color: #fff; font-size: .8rem; }
+.status { margin-top: 10px; font-size: .925rem; color: var(--muted); }
+.status.err { color: var(--danger); }
+.bubble { background: var(--accent-soft); border-radius: 12px; padding: 12px 14px; margin: 12px 0 4px; }
+.bubble .who { font-size: .75rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 2px; }
+.review { margin-top: 12px; }
+.review .ritem { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px solid var(--line); }
+.review .ritem:first-child { border-top: 0; }
+.review .ritem .rname { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.review .ritem .rname small { display: block; color: var(--muted); }
+.review .ritem input { width: 92px; flex: none; min-height: 40px; padding: 8px 10px; text-align: right; }
+.review .total { display: flex; justify-content: space-between; font-weight: 700; padding-top: 10px; border-top: 1px solid var(--line); margin-top: 4px; }
+.source { display: inline-block; font-size: .75rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--bg); border: 1px solid var(--line); color: var(--muted); }
+.check { display: flex; align-items: center; gap: 10px; font-weight: 400; margin: 14px 0 0; }
+.check input { width: 22px; height: 22px; min-height: 0; flex: none; accent-color: var(--accent); }
+.row-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+.row-btns .btn { flex: 1; min-width: 140px; }
+details.manual summary { cursor: pointer; font-weight: 700; font-size: 1.05rem; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+details.manual summary::-webkit-details-marker { display: none; }
+details.manual summary::after { content: "+"; color: var(--accent); font-size: 1.4rem; line-height: 1; }
+details.manual[open] summary::after { content: "\2212"; }
+.mealchips { display: flex; flex-wrap: wrap; gap: 8px; }
+.mealchip { background: var(--accent-soft); color: var(--text); font-weight: 400; min-height: 44px; padding: 8px 12px; text-align: left; }
+.mealchip b { font-weight: 600; }
+.mealchip small { display: block; color: var(--muted); font-size: .8rem; }
+.savedlist { list-style: none; margin: 0; padding: 0; }
+.savedlist li { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-top: 1px solid var(--line); }
+.savedlist li:first-child { border-top: 0; }
+.savedlist .name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.savedlist .name small { display: block; color: var(--muted); }
+.sync { font-size: .8rem; color: var(--muted); }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-size: .9rem; font-weight: 600; z-index: 20; max-width: calc(100% - 32px); text-align: center; }
 </style>
-</head>
 <body>
 <main>
-
   <!-- ============ QUESTIONNAIRE ============ -->
   <section id="setup" class="hidden">
     <h1>Let's find your calorie goal</h1>
@@ -292,38 +355,98 @@ footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 
       </div>
     </div>
 
-    <form id="addForm" class="card" autocomplete="off">
-      <h2>Add food</h2>
-      <label for="foodName" style="margin-top:0">What did you eat?</label>
-      <input id="foodName" list="foodSuggestions" placeholder="e.g. 2 eggs, toast" maxlength="80">
-      <datalist id="foodSuggestions"></datalist>
-      <div class="row">
-        <div>
-          <label for="foodCal">Calories</label>
-          <input id="foodCal" type="number" inputmode="numeric" min="0" max="10000" placeholder="kcal">
+    <!-- Assistant -->
+    <div class="card assist" id="assist">
+      <h2>What did you eat?</h2>
+      <label for="askText" class="muted small" style="font-weight:400;margin:0 0 8px">Say it or type it. For example: "two eggs, a slice of toast with butter and a coffee with milk".</label>
+      <textarea id="askText" maxlength="1500" placeholder="Tell me what you ate…"></textarea>
+      <div class="tools">
+        <button type="button" class="tool" id="micBtn" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+          <span id="micLabel">Talk</span>
+        </button>
+        <button type="button" class="tool" id="photoBtn" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+          <span>Photo</span>
+        </button>
+        <input type="file" id="photoInput" accept="image/*" capture="environment" class="hidden">
+      </div>
+      <div class="thumbs" id="thumbs"></div>
+      <p class="muted small" id="micHint" style="margin:10px 0 0" hidden>Tip: tap the microphone on your phone's keyboard to talk instead of typing.</p>
+      <button type="button" class="btn" id="askBtn">Work out the calories</button>
+      <div class="status" id="askStatus" role="status"></div>
+
+      <div id="reviewWrap" hidden>
+        <div class="bubble" id="claudeBubble" hidden><span class="who">Claude</span><span id="claudeText"></span></div>
+        <div class="review">
+          <p style="margin:0 0 6px"><span class="source" id="reviewSource"></span></p>
+          <div id="reviewList"></div>
+          <div class="total"><span>Total</span><span id="reviewTotal">0 kcal</span></div>
         </div>
-        <div>
-          <label for="foodMeal">Meal</label>
-          <select id="foodMeal">
-            <option value="breakfast">Breakfast</option>
-            <option value="lunch">Lunch</option>
-            <option value="dinner">Dinner</option>
-            <option value="snack">Snack</option>
-          </select>
+        <label for="replyText" id="replyLabel">Anything to correct or add?</label>
+        <textarea id="replyText" maxlength="800" placeholder="e.g. it was a big plate, and the sauce was creamy"></textarea>
+        <button type="button" class="btn secondary" id="replyBtn">Ask Claude to update it</button>
+        <div class="row" style="margin-top:6px">
+          <div>
+            <label for="reviewMeal">Meal</label>
+            <select id="reviewMeal">
+              <option value="breakfast">Breakfast</option>
+              <option value="lunch">Lunch</option>
+              <option value="dinner">Dinner</option>
+              <option value="snack">Snack</option>
+            </select>
+          </div>
+        </div>
+        <label class="check"><input type="checkbox" id="rememberChk"> Remember this as a regular meal</label>
+        <input id="rememberName" maxlength="60" placeholder="Name it, e.g. My usual breakfast" hidden style="margin-top:8px">
+        <div class="row-btns">
+          <button type="button" class="btn" id="addAllBtn">Add to my day</button>
+          <button type="button" class="btn secondary" id="discardBtn">Start over</button>
         </div>
       </div>
-      <div id="addError" class="error" role="alert"></div>
-      <button type="submit" class="btn">Add</button>
-      <div id="quickWrap" class="hidden">
-        <p class="muted small" style="margin:14px 0 0">Tap to add again:</p>
-        <div class="quick" id="quickList"></div>
-      </div>
-    </form>
+    </div>
+
+    <!-- Regular meals -->
+    <div class="card" id="regularCard" hidden>
+      <h2>Your regular meals</h2>
+      <p class="muted small" style="margin-top:-6px">Tap one to add it all at once.</p>
+      <div class="mealchips" id="regularList"></div>
+    </div>
 
     <div class="card">
       <h2>Eaten <span id="dayWord">today</span></h2>
       <div id="mealsList"></div>
     </div>
+
+    <details class="card manual" id="manualBox">
+      <summary>Add a food by hand</summary>
+      <form id="addForm" autocomplete="off" style="margin-top:12px">
+        <label for="foodName" style="margin-top:0">Food</label>
+        <input id="foodName" list="foodSuggestions" placeholder="e.g. Banana" maxlength="80">
+        <datalist id="foodSuggestions"></datalist>
+        <div class="row">
+          <div>
+            <label for="foodCal">Calories</label>
+            <input id="foodCal" type="number" inputmode="numeric" min="0" max="10000" placeholder="kcal">
+          </div>
+          <div>
+            <label for="foodMeal">Meal</label>
+            <select id="foodMeal">
+              <option value="breakfast">Breakfast</option>
+              <option value="lunch">Lunch</option>
+              <option value="dinner">Dinner</option>
+              <option value="snack">Snack</option>
+            </select>
+          </div>
+        </div>
+        <div id="addError" class="error" role="alert"></div>
+        <button type="submit" class="btn">Add</button>
+        <div id="quickWrap" class="hidden">
+          <p class="muted small" style="margin:14px 0 0">Tap to add again:</p>
+          <div class="quick" id="quickList"></div>
+        </div>
+      </form>
+    </details>
   </section>
 
   <!-- ============ SETTINGS ============ -->
@@ -344,40 +467,84 @@ footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 
     </div>
 
     <div class="card">
+      <h2>Regular meals</h2>
+      <ul class="savedlist" id="savedList"></ul>
+      <p class="muted small" id="savedEmpty">None yet. After working out a meal, tick "Remember this as a regular meal".</p>
+    </div>
+
+    <div class="card">
       <h2>Your data</h2>
-      <p class="muted small">Everything is saved only on this phone or computer, in this browser. Nothing is sent anywhere. If you clear your browser's history and site data, it will be erased, so you can save a backup file here.</p>
+      <p class="muted small" id="dataInfo"></p>
       <button class="btn secondary" id="exportData">Save a backup file</button>
       <button class="btn secondary" id="importBtn">Restore from a backup file</button>
       <input type="file" id="importFile" accept="application/json,.json" class="hidden">
       <div id="dataMsg" class="small" style="margin-top:10px" role="status"></div>
-      <button class="btn-danger" id="resetAll" style="margin-top:14px">Erase everything and start over</button>
+      <button class="btn-danger" id="resetAll" style="margin-top:6px">Erase everything and start over</button>
     </div>
   </section>
 
-  <footer>Your data stays on this device.</footer>
+  <footer>Your data stays on this device · goals use the Mifflin-St Jeor formula · not medical advice</footer>
 </main>
-
+<div class="toast" id="toast" role="status" hidden></div>
 <script>
 (function () {
   "use strict";
 
-  // ---------- Storage ----------
-  var KEY = "calorieTracker.v1";
-  var state = load();
+  // ---------- State ----------
+  // state.log: { "2026-11-22": [ {id, name, cal, meal} ] }
+  // state.meals: [ {id, name, items:[{name, cal}], uses} ]
+  var LOCAL_KEY = "calorieTracker.app.v1";
+  var state = blank();
+  var db = null, uid = null, cloud = false;
 
-  function blank() { return { profile: null, goal: null, log: {} }; }
-  function load() {
+  function blank() { return { profile: null, goal: null, goalSource: null, log: {}, meals: [] }; }
+
+  function readLocal() {
     try {
-      var raw = localStorage.getItem(KEY);
-      if (!raw) return blank();
-      var s = JSON.parse(raw);
-      if (!s || typeof s !== "object") return blank();
-      s.log = s.log || {};
-      return s;
-    } catch (e) { return blank(); }
+      // fall back to the first version's saved data, if this browser has it
+      var s = JSON.parse(localStorage.getItem(LOCAL_KEY) || localStorage.getItem("calorieTracker.v1") || "null");
+      if (s && typeof s === "object") { s.log = s.log || {}; s.meals = s.meals || []; return s; }
+    } catch (e) { /* no local copy */ }
+    return null;
   }
-  function save() {
-    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* storage unavailable */ }
+  function writeLocal() {
+    try { localStorage.setItem(LOCAL_KEY, JSON.stringify(state)); } catch (e) { /* storage unavailable */ }
+  }
+
+  // Cloud storage: one document per thing that changes, written one at a time.
+  var queues = {};
+  function cloudWrite(key, body) {
+    if (!cloud) return;
+    var ref = db.collection("data/users/" + uid).doc(key);
+    var prev = queues[key] || Promise.resolve();
+    queues[key] = prev.then(function () { return body ? ref.set(body) : ref.delete(); }).catch(function (e) {
+      toast("Couldn't save to your account just now. It's kept on this phone.");
+      if (window.console) console.warn("save failed", key, e && e.code);
+    });
+  }
+  function save() { // settings: profile + goal
+    writeLocal();
+    cloudWrite("settings", { profile: state.profile, goal: state.goal, goalSource: state.goalSource || null });
+  }
+  function saveDay(key) {
+    writeLocal();
+    var list = state.log[key];
+    cloudWrite("day-" + key, list && list.length ? { entries: list } : null);
+  }
+  function saveMeals() {
+    writeLocal();
+    cloudWrite("meals", { list: state.meals });
+  }
+
+  function applyDocs(docs) {
+    var s = blank();
+    docs.forEach(function (d) {
+      var body = d.data() || {};
+      if (d.id === "settings") { s.profile = body.profile || null; s.goal = body.goal || null; s.goalSource = body.goalSource || null; }
+      else if (d.id === "meals") { s.meals = Array.isArray(body.list) ? body.list.slice() : []; }
+      else if (d.id.indexOf("day-") === 0 && Array.isArray(body.entries)) { s.log[d.id.slice(4)] = body.entries.slice(); }
+    });
+    return s;
   }
 
   // ---------- Helpers ----------
@@ -400,7 +567,248 @@ footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 
     return d.getFullYear() + "-" + (m < 10 ? "0" : "") + m + "-" + (day < 10 ? "0" : "") + day;
   }
   function parseKey(k) { var p = k.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]); }
-  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function uidGen() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  var toastTimer;
+  function toast(msg) {
+    var t = $("toast");
+    t.textContent = msg; t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.hidden = true; }, 3200);
+  }
+
+  // ---------- Built-in food list ----------
+  // [names (first is shown), kcal per serving, serving description, grams per serving or 0]
+  // Values are typical averages; Claude handles anything not listed or unusual.
+  var FOODS = [
+    ["egg|eggs|boiled egg|fried egg", 78, "1 egg", 50],
+    ["scrambled eggs", 180, "2 eggs", 0],
+    ["omelette|omelet", 250, "2-egg omelette", 0],
+    ["bread|slice of bread|slice of toast|toast", 80, "1 slice", 30],
+    ["rye bread|rugbrød|rugbrod", 100, "1 slice", 45],
+    ["bread roll|roll|bun|bolle", 150, "1 roll", 55],
+    ["croissant", 230, "1 croissant", 55],
+    ["bagel", 250, "1 bagel", 95],
+    ["pita|pita bread", 170, "1 pita", 60],
+    ["tortilla|wrap", 140, "1 tortilla", 45],
+    ["butter", 35, "1 tsp", 5],
+    ["margarine", 35, "1 tsp", 5],
+    ["peanut butter", 95, "1 tbsp", 16],
+    ["jam|marmalade", 50, "1 tbsp", 20],
+    ["honey", 64, "1 tbsp", 21],
+    ["nutella|chocolate spread", 100, "1 tbsp", 19],
+    ["cheese|cheddar|slice of cheese", 80, "1 slice", 20],
+    ["feta|feta cheese", 75, "30 g", 30],
+    ["halloumi", 95, "30 g", 30],
+    ["mozzarella", 85, "30 g", 30],
+    ["parmesan", 40, "1 tbsp grated", 10],
+    ["cream cheese", 50, "1 tbsp", 15],
+    ["ham|slice of ham", 30, "1 slice", 20],
+    ["salami", 40, "1 slice", 10],
+    ["bacon|rasher of bacon", 45, "1 rasher", 10],
+    ["sausage|sausages|pølse|polse", 190, "1 sausage", 70],
+    ["hot dog", 290, "1 hot dog", 0],
+    ["oatmeal|porridge|oats|havregrød|havregrod", 150, "1 bowl (40 g oats)", 0],
+    ["muesli|granola", 200, "1 serving (50 g)", 50],
+    ["cereal|cornflakes", 150, "1 bowl (40 g)", 40],
+    ["yogurt|yoghurt|plain yogurt", 100, "1 small pot (150 g)", 150],
+    ["greek yogurt|greek yoghurt", 145, "150 g", 150],
+    ["skyr", 95, "150 g", 150],
+    ["milk|glass of milk", 120, "1 glass (250 ml)", 250],
+    ["skimmed milk|skim milk", 85, "1 glass (250 ml)", 250],
+    ["oat milk", 110, "1 glass (250 ml)", 250],
+    ["coffee|black coffee|espresso|americano", 2, "1 cup", 0],
+    ["coffee with milk|latte|cafe latte|flat white", 120, "1 cup", 0],
+    ["cappuccino", 90, "1 cup", 0],
+    ["tea", 2, "1 cup", 0],
+    ["sugar|teaspoon of sugar", 16, "1 tsp", 4],
+    ["orange juice|juice|apple juice", 110, "1 glass (250 ml)", 250],
+    ["cola|coke|soda|soft drink", 140, "1 can (330 ml)", 0],
+    ["diet coke|coke zero|diet soda|pepsi max|cola zero", 1, "1 can", 0],
+    ["beer|øl|ol", 150, "1 bottle (330 ml)", 0],
+    ["wine|glass of wine|red wine|white wine", 125, "1 glass (150 ml)", 0],
+    ["smoothie", 180, "1 glass (250 ml)", 250],
+    ["protein shake", 150, "1 shake", 0],
+    ["water|sparkling water", 0, "1 glass", 0],
+    ["apple|apples", 95, "1 apple", 180],
+    ["banana|bananas", 105, "1 banana", 120],
+    ["orange|oranges", 60, "1 orange", 130],
+    ["pear", 100, "1 pear", 180],
+    ["grapes", 70, "1 handful (100 g)", 100],
+    ["strawberries", 35, "1 cup (110 g)", 110],
+    ["blueberries", 85, "1 cup (150 g)", 150],
+    ["watermelon", 45, "1 slice (150 g)", 150],
+    ["melon", 50, "1 slice (150 g)", 150],
+    ["kiwi", 45, "1 kiwi", 75],
+    ["peach|nectarine", 60, "1 fruit", 150],
+    ["mango", 100, "1 cup (165 g)", 165],
+    ["dates", 66, "1 date", 24],
+    ["raisins", 85, "1 small handful (30 g)", 30],
+    ["avocado", 240, "1 avocado", 150],
+    ["tomato|tomatoes", 20, "1 tomato", 120],
+    ["cucumber", 15, "half a cucumber", 150],
+    ["carrot|carrots", 25, "1 carrot", 60],
+    ["salad|green salad|side salad", 50, "1 side salad, no dressing", 0],
+    ["greek salad|horiatiki", 300, "1 bowl", 0],
+    ["caesar salad", 400, "1 bowl", 0],
+    ["broccoli", 35, "1 cup (90 g)", 90],
+    ["spinach", 7, "1 cup raw", 30],
+    ["potato|potatoes|boiled potatoes", 130, "1 medium potato", 170],
+    ["baked potato|jacket potato", 160, "1 medium", 170],
+    ["mashed potatoes|mash", 210, "1 cup", 210],
+    ["fries|chips|french fries|pommes frites", 365, "1 medium portion", 115],
+    ["sweet potato", 115, "1 medium", 130],
+    ["rice|white rice|cooked rice", 205, "1 cup cooked", 160],
+    ["brown rice", 215, "1 cup cooked", 195],
+    ["pasta|spaghetti|penne|noodles", 220, "1 cup cooked", 140],
+    ["couscous", 175, "1 cup cooked", 155],
+    ["quinoa", 220, "1 cup cooked", 185],
+    ["chicken breast|chicken|grilled chicken", 165, "100 g cooked", 100],
+    ["chicken thigh", 210, "100 g cooked", 100],
+    ["turkey", 150, "100 g cooked", 100],
+    ["beef|steak", 250, "100 g cooked", 100],
+    ["minced beef|ground beef|mince", 250, "100 g cooked", 100],
+    ["pork|pork chop", 240, "100 g cooked", 100],
+    ["meatballs|frikadeller|keftedes", 75, "1 meatball", 30],
+    ["lamb", 280, "100 g cooked", 100],
+    ["salmon", 210, "100 g cooked", 100],
+    ["tuna|canned tuna", 110, "1 small can drained (100 g)", 100],
+    ["cod|white fish|fish", 105, "100 g cooked", 100],
+    ["shrimp|prawns", 100, "100 g cooked", 100],
+    ["herring|sild", 160, "1 serving (60 g)", 60],
+    ["tofu", 145, "100 g", 100],
+    ["beans|kidney beans|chickpeas", 220, "1 cup cooked", 170],
+    ["lentils", 230, "1 cup cooked", 200],
+    ["hummus", 70, "2 tbsp", 30],
+    ["tzatziki", 40, "2 tbsp", 30],
+    ["olive oil|oil", 120, "1 tbsp", 14],
+    ["mayonnaise|mayo", 95, "1 tbsp", 14],
+    ["ketchup", 20, "1 tbsp", 17],
+    ["salad dressing|dressing", 70, "1 tbsp", 15],
+    ["olives", 40, "10 olives", 0],
+    ["nuts|almonds|walnuts|cashews|peanuts", 170, "1 handful (30 g)", 30],
+    ["pizza|slice of pizza", 285, "1 slice", 0],
+    ["burger|hamburger|cheeseburger", 550, "1 burger", 0],
+    ["kebab|doner|döner", 650, "1 kebab in bread", 0],
+    ["gyros|gyro|pita gyros", 600, "1 pita gyros", 0],
+    ["souvlaki", 160, "1 skewer", 0],
+    ["moussaka", 550, "1 portion", 0],
+    ["spanakopita", 300, "1 piece", 0],
+    ["sandwich", 350, "1 sandwich", 0],
+    ["smørrebrød|smorrebrod|open sandwich", 250, "1 piece", 0],
+    ["sushi|sushi piece", 45, "1 piece", 0],
+    ["lasagna|lasagne", 400, "1 portion", 0],
+    ["spaghetti bolognese|bolognese", 600, "1 plate", 0],
+    ["chicken curry|curry", 450, "1 portion, no rice", 0],
+    ["soup|vegetable soup", 150, "1 bowl", 0],
+    ["chocolate|chocolate bar", 230, "1 bar (45 g)", 45],
+    ["piece of chocolate|square of chocolate", 30, "1 square", 6],
+    ["cookie|biscuit|cookies|biscuits", 70, "1 cookie", 15],
+    ["cake|slice of cake", 350, "1 slice", 0],
+    ["donut|doughnut", 260, "1 donut", 0],
+    ["muffin", 400, "1 muffin", 0],
+    ["danish pastry|wienerbrød|wienerbrod|pastry", 350, "1 pastry", 0],
+    ["ice cream", 140, "1 scoop", 0],
+    ["crisps|potato chips", 160, "1 small bag (30 g)", 30],
+    ["popcorn", 110, "1 small bowl (25 g)", 25],
+    ["protein bar", 200, "1 bar", 0],
+    ["granola bar|cereal bar", 120, "1 bar", 0]
+  ];
+
+  var NUMBER_WORDS = { a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, half: 0.5, couple: 2, few: 3, some: 1, several: 3, "a couple of": 2, "a few": 3, "half a": 0.5, "half an": 0.5 };
+  var FOOD_INDEX = (function () {
+    var list = [];
+    FOODS.forEach(function (f) {
+      var names = f[0].split("|");
+      names.forEach(function (n) { list.push({ alias: n, food: { name: names[0], kcal: f[1], serving: f[2], grams: f[3] } }); });
+    });
+    // longest names first so "coffee with milk" beats "coffee"
+    return list.sort(function (a, b) { return b.alias.length - a.alias.length; });
+  })();
+
+  function escapeRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+  function containsWord(text, phrase) {
+    return new RegExp("(^|[^a-zæøåäöü])" + escapeRe(phrase) + "(s|es)?($|[^a-zæøåäöü])").test(text);
+  }
+  function capital(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+  // Turns "2 eggs, toast with butter and a coffee" into matched items.
+  // Returns {items, unknown} where unknown holds the parts it couldn't place.
+  function parseLocally(text) {
+    var clean = text.toLowerCase().replace(/[!?.]+$/g, "").trim();
+    var items = [], unknown = [];
+    if (!clean) return { items: items, unknown: unknown };
+    // whole phrase first: a saved meal or a known dish with "with" in its name
+    var parts = clean.split(/\s*(?:,|;|\+|\n|\band then\b|\bplus\b|\band\b|\balso\b|&)\s*/);
+    var chunks = [];
+    parts.forEach(function (p) {
+      p = p.trim();
+      if (!p) return;
+      var whole = matchOne(p);
+      if (whole && whole.exact) { chunks.push(p); return; }
+      p.split(/\s+with\s+/).forEach(function (q) { if (q.trim()) chunks.push(q.trim()); });
+    });
+    chunks.forEach(function (c) {
+      var m = matchOne(c);
+      if (!m) { unknown.push(c); return; }
+      m.items.forEach(function (it) { items.push(it); });
+    });
+    return { items: items, unknown: unknown };
+  }
+
+  function readQuantity(c) {
+    var qty = 1, grams = 0, m;
+    m = c.match(/(\d+(?:[.,]\d+)?)\s*(g|gr|grams?|gram)\b/);
+    if (m) grams = parseFloat(m[1].replace(",", "."));
+    m = c.match(/(\d+(?:[.,]\d+)?)\s*(ml|millilitres?|milliliters?)\b/);
+    if (m && !grams) grams = parseFloat(m[1].replace(",", "."));
+    if (!grams) {
+      m = c.match(/^(\d+(?:[.,]\d+)?|\d+\/\d+)\b/);
+      if (m) {
+        qty = m[1].indexOf("/") > -1 ? (+m[1].split("/")[0] / +m[1].split("/")[1]) : parseFloat(m[1].replace(",", "."));
+      } else {
+        var keys = Object.keys(NUMBER_WORDS).sort(function (a, b) { return b.length - a.length; });
+        for (var i = 0; i < keys.length; i++) {
+          if (c.indexOf(keys[i] + " ") === 0) { qty = NUMBER_WORDS[keys[i]]; break; }
+        }
+      }
+    }
+    return { qty: qty > 0 && qty < 50 ? qty : 1, grams: grams };
+  }
+
+  function matchOne(c) {
+    var q = readQuantity(c);
+    // 1) the person's regular meals
+    var meals = state.meals || [];
+    for (var i = 0; i < meals.length; i++) {
+      var mn = meals[i].name.toLowerCase();
+      if (mn && (c === mn || containsWord(c, mn) || c.indexOf(mn) > -1)) {
+        return { exact: true, items: meals[i].items.map(function (it) {
+          return { name: it.name, cal: Math.round(it.cal * q.qty), portion: q.qty !== 1 ? "x" + q.qty : "", from: "meal" };
+        }) };
+      }
+    }
+    // 2) foods they've logged before, matched by their exact name
+    var known = knownFoods();
+    for (var k = 0; k < known.length; k++) {
+      var kn = known[k].name.toLowerCase();
+      if (kn.length > 2 && (c === kn || c.replace(/^(\d+|a|an|one)\s+/, "") === kn)) {
+        return { exact: true, items: [{ name: known[k].name, cal: Math.round(known[k].cal * q.qty), portion: q.qty !== 1 ? "x" + q.qty : "", from: "history" }] };
+      }
+    }
+    // 3) the built-in list
+    for (var j = 0; j < FOOD_INDEX.length; j++) {
+      var e = FOOD_INDEX[j];
+      if (containsWord(c, e.alias)) {
+        var f = e.food, cal, portion;
+        if (q.grams && f.grams) { cal = f.kcal * q.grams / f.grams; portion = q.grams + (/ml/.test(c) ? " ml" : " g"); }
+        else { cal = f.kcal * q.qty; portion = (q.qty === 1 ? "" : fmtQty(q.qty) + " × ") + f.serving; }
+        var shown = q.grams && f.grams ? capital(f.name) : (q.qty === 1 ? "" : fmtQty(q.qty) + " × ") + capital(f.name);
+        return { exact: c.replace(/^[\d\s.,/]+|^(a|an|one|two|three|four|five|half)\s+/g, "").trim() === e.alias, items: [{ name: shown, cal: Math.round(cal), portion: portion, from: "list" }] };
+      }
+    }
+    return null;
+  }
+  function fmtQty(n) { return n === 0.5 ? "½" : String(Math.round(n * 100) / 100); }
 
   // ---------- Calorie maths ----------
   var KCAL_PER_KG = 7700;   // roughly the energy in 1 kg of body fat
@@ -539,6 +947,7 @@ footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 
   $("startTracking").addEventListener("click", function () { viewDate = new Date(); $("foodMeal").value = guessMeal(); renderTracker(); show("tracker"); });
   $("redoFromResult").addEventListener("click", function () { fillForm(state.profile); show("setup"); });
 
+
   // ---------- Tracker ----------
   var viewDate = new Date();
   var MEALS = [["breakfast", "Breakfast"], ["lunch", "Lunch"], ["dinner", "Dinner"], ["snack", "Snacks"]];
@@ -550,9 +959,7 @@ footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 
     if (h >= 17 && h < 22) return "dinner";
     return "snack";
   }
-
   function entriesFor(key) { return state.log[key] || []; }
-
   function dayLabel(d) {
     var today = new Date(); today.setHours(0, 0, 0, 0);
     var x = new Date(d); x.setHours(0, 0, 0, 0);
@@ -574,6 +981,7 @@ footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 
     $("dayDate").textContent = viewDate.toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" });
     $("nextDay").disabled = isToday;
     $("dayWord").textContent = isToday ? "today" : "on this day";
+    $("addAllBtn").textContent = isToday ? "Add to my day" : "Add to " + dayLabel(viewDate).toLowerCase();
 
     $("statGoal").textContent = fmt(goal);
     $("statEaten").textContent = fmt(eaten);
@@ -589,39 +997,44 @@ footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 
     bar.style.strokeDashoffset = C * (1 - frac);
     bar.style.stroke = left < 0 ? "var(--warn)" : "var(--accent)";
 
-    // meals list
-    var html = "";
-    if (!entries.length) {
-      html = '<p class="empty">Nothing logged yet. Add what you eat above.</p>';
-    } else {
-      MEALS.forEach(function (m) {
-        var list = entries.filter(function (e) { return (e.meal || "snack") === m[0]; });
-        if (!list.length) return;
-        var sub = list.reduce(function (s, e) { return s + (+e.cal || 0); }, 0);
-        html += '<div class="meal"><h3><span>' + m[1] + "</span><span>" + fmt(sub) + ' kcal</span></h3><ul class="entries">';
-        list.forEach(function (e) {
-          html += '<li><span class="name"></span><span class="cal">' + fmt(e.cal) + ' kcal</span><button class="btn-danger" data-del="' + e.id + '" aria-label="Remove">✕</button></li>';
-        });
-        html += "</ul></div>";
-      });
-    }
     var wrap = $("mealsList");
-    wrap.innerHTML = html;
-    // set names via textContent so whatever was typed is shown safely
-    var names = wrap.querySelectorAll(".name");
-    var ordered = [];
-    MEALS.forEach(function (m) { entries.forEach(function (e) { if ((e.meal || "snack") === m[0]) ordered.push(e); }); });
-    Array.prototype.forEach.call(names, function (el, i) { el.textContent = ordered[i].name; });
+    wrap.textContent = "";
+    if (!entries.length) {
+      var p = document.createElement("p"); p.className = "empty";
+      p.textContent = "Nothing logged yet. Tell me what you ate above.";
+      wrap.appendChild(p);
+    }
+    MEALS.forEach(function (m) {
+      var list = entries.filter(function (e) { return (e.meal || "snack") === m[0]; });
+      if (!list.length) return;
+      var sub = list.reduce(function (s, e) { return s + (+e.cal || 0); }, 0);
+      var box = document.createElement("div"); box.className = "meal";
+      var h = document.createElement("h3");
+      var a = document.createElement("span"); a.textContent = m[1];
+      var b = document.createElement("span"); b.textContent = fmt(sub) + " kcal";
+      h.appendChild(a); h.appendChild(b); box.appendChild(h);
+      var ul = document.createElement("ul"); ul.className = "entries";
+      list.forEach(function (e) {
+        var li = document.createElement("li");
+        var n = document.createElement("span"); n.className = "name"; n.textContent = e.name;
+        var c = document.createElement("span"); c.className = "cal"; c.textContent = fmt(e.cal) + " kcal";
+        var x = document.createElement("button"); x.className = "btn-danger"; x.textContent = "✕";
+        x.setAttribute("aria-label", "Remove " + e.name); x.setAttribute("data-del", e.id);
+        li.appendChild(n); li.appendChild(c); li.appendChild(x); ul.appendChild(li);
+      });
+      box.appendChild(ul); wrap.appendChild(box);
+    });
 
     renderSuggestions();
+    renderRegulars();
   }
 
-  // Remember foods you've eaten before so you can re-add them in one tap
   function knownFoods() {
     var map = {};
     Object.keys(state.log).sort().forEach(function (k) {
-      state.log[k].forEach(function (e) {
-        var n = e.name.trim();
+      (state.log[k] || []).forEach(function (e) {
+        var n = String(e.name || "").trim();
+        if (!n) return;
         var id = n.toLowerCase();
         var prev = map[id];
         map[id] = { name: n, cal: e.cal, count: (prev ? prev.count : 0) + 1, last: k };
@@ -633,28 +1046,50 @@ footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 
   function renderSuggestions() {
     var foods = knownFoods();
     var dl = $("foodSuggestions");
-    dl.innerHTML = "";
+    dl.textContent = "";
     foods.forEach(function (f) { var o = document.createElement("option"); o.value = f.name; dl.appendChild(o); });
-
     var top = foods.sort(function (a, b) { return b.count - a.count || (b.last > a.last ? 1 : -1); }).slice(0, 6);
     var q = $("quickList");
-    q.innerHTML = "";
+    q.textContent = "";
     top.forEach(function (f) {
       var b = document.createElement("button");
       b.type = "button";
       var nm = document.createElement("span"); nm.textContent = f.name + " ";
       var c = document.createElement("b"); c.textContent = fmt(f.cal);
       b.appendChild(nm); b.appendChild(c);
-      b.addEventListener("click", function () { addEntry(f.name, f.cal, $("foodMeal").value); });
+      b.addEventListener("click", function () { addEntries([{ name: f.name, cal: f.cal }], $("foodMeal").value); toast("Added " + f.name); });
       q.appendChild(b);
     });
     $("quickWrap").classList.toggle("hidden", !top.length);
   }
 
-  function addEntry(name, cal, meal) {
+  function renderRegulars() {
+    var list = (state.meals || []).slice().sort(function (a, b) { return (b.uses || 0) - (a.uses || 0); });
+    $("regularCard").hidden = !list.length;
+    var box = $("regularList");
+    box.textContent = "";
+    list.forEach(function (m) {
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "mealchip";
+      var total = m.items.reduce(function (s, it) { return s + (+it.cal || 0); }, 0);
+      var t = document.createElement("b"); t.textContent = m.name;
+      var s = document.createElement("small"); s.textContent = fmt(total) + " kcal · " + m.items.length + (m.items.length === 1 ? " item" : " items");
+      b.appendChild(t); b.appendChild(s);
+      b.addEventListener("click", function () {
+        addEntries(m.items, guessMeal());
+        m.uses = (m.uses || 0) + 1;
+        saveMeals();
+        toast("Added " + m.name);
+      });
+      box.appendChild(b);
+    });
+  }
+
+  function addEntries(items, meal) {
     var key = dateKey(viewDate);
-    state.log[key] = entriesFor(key).concat([{ id: uid(), name: name, cal: Math.round(cal), meal: meal }]);
-    save();
+    var add = items.map(function (it) { return { id: uidGen(), name: String(it.name).slice(0, 80), cal: Math.max(0, Math.round(+it.cal || 0)), meal: meal }; });
+    state.log[key] = entriesFor(key).concat(add);
+    saveDay(key);
     renderTracker();
   }
 
@@ -662,6 +1097,7 @@ footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 
     var v = this.value.trim().toLowerCase();
     if (!v || $("foodCal").value) return;
     var match = knownFoods().filter(function (f) { return f.name.toLowerCase() === v; })[0];
+    if (!match) { var m = matchOne(v); if (m && m.items.length === 1) match = m.items[0]; }
     if (match) $("foodCal").value = match.cal;
   });
 
@@ -673,10 +1109,9 @@ footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 
     err.textContent = "";
     if (!name) { err.textContent = "Type what you ate."; $("foodName").focus(); return; }
     if (isNaN(cal) || cal < 0 || cal > 10000) { err.textContent = "Enter how many calories it had (a number)."; $("foodCal").focus(); return; }
-    addEntry(name, cal, $("foodMeal").value);
-    $("foodName").value = "";
-    $("foodCal").value = "";
-    $("foodName").blur(); $("foodCal").blur();
+    addEntries([{ name: name, cal: cal }], $("foodMeal").value);
+    $("foodName").value = ""; $("foodCal").value = "";
+    toast("Added " + name);
   });
 
   $("mealsList").addEventListener("click", function (e) {
@@ -685,7 +1120,7 @@ footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 
     var key = dateKey(viewDate);
     state.log[key] = entriesFor(key).filter(function (x) { return x.id !== id; });
     if (!state.log[key].length) delete state.log[key];
-    save();
+    saveDay(key);
     renderTracker();
   });
 
@@ -693,6 +1128,269 @@ footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 
   $("nextDay").addEventListener("click", function () {
     if (dateKey(viewDate) === dateKey(new Date())) return;
     viewDate.setDate(viewDate.getDate() + 1); renderTracker();
+  });
+
+  // ---------- Assistant: talk, photos, Claude ----------
+  var sample = null, imageLimits = null, dictation = null;
+  var photos = [];          // File/Blob list for this meal
+  var turns = [];           // conversation with Claude for this meal
+  var review = null;        // { items:[{name, cal, portion}], source, suggestedName }
+  var askCtl = null;
+
+  var CLAUDE_RULES = [
+    "You are the calorie-counting helper inside a personal calorie tracker. The person is trying to lose weight and is not a nutrition expert.",
+    "They describe what they ate in their own words (often dictated, so expect speech-to-text mistakes) and may attach photos of the food.",
+    "Work out each separate food or drink and estimate its calories for the portion they had. Use realistic everyday portions when they don't say, and judge portion size from photos (plate size, utensils, hands).",
+    "Count cooking oil, butter, sauces, dressings and drinks when they are mentioned or clearly visible, as their own items.",
+    "If the person's regular meals or past foods (given below) match what they describe, reuse those names and calories.",
+    "If something important is unclear and would change the total by more than about 100 kcal (for example the portion, or whether it was fried), still give your best estimate, and ask ONE short question in \"question\".",
+    "Keep \"reply\" to one or two friendly, plain sentences: what you counted and any assumption. No lectures about diet.",
+    "If the photo shows no food, return no items and say so in \"reply\".",
+    "Reply with only a JSON object of this shape, nothing else:",
+    '{"reply": string, "question": string or null, "meal_name": string (a short name for this meal, e.g. "Chicken salad lunch"), "items": [{"name": string, "portion": string, "calories": number}]}'
+  ].join("\n");
+
+  function contextBlock() {
+    var meals = (state.meals || []).slice(0, 25).map(function (m) {
+      return { name: m.name, items: m.items.map(function (i) { return i.name + " (" + i.cal + " kcal)"; }) };
+    });
+    var past = knownFoods().sort(function (a, b) { return b.count - a.count; }).slice(0, 40).map(function (f) { return f.name + " = " + f.cal + " kcal"; });
+    var lines = [];
+    if (meals.length) lines.push("Their regular meals: " + JSON.stringify(meals));
+    if (past.length) lines.push("Foods they have logged before: " + past.join("; "));
+    return lines.join("\n");
+  }
+
+  function setStatus(msg, isErr) {
+    var s = $("askStatus");
+    s.textContent = msg || "";
+    s.classList.toggle("err", !!isErr);
+  }
+
+  function claudeErrorText(e) {
+    var code = e && e.code;
+    if (code === "not_granted" || code === "sampling_disabled" || code === "not_declared" || code === "capability_disabled" || code === "capability_removed")
+      return "Claude isn't allowed for this page yet. You can still type foods from the built-in list, or add them by hand below.";
+    if (code === "rate_limited") return e.reason === "usage_limit" ? "You've reached your Claude usage limit for now. Try again later, or add foods by hand." : "Claude is busy. Wait a moment and try again.";
+    if (code === "session_expired") return "Please sign in to Claude again, then try once more.";
+    if (code === "image_rejected") return "That photo couldn't be read. Try another photo.";
+    if (code === "images_unavailable") return "Photos can't be sent from here. Describe the food in words instead.";
+    if (code === "refused") return "Claude couldn't help with that. Try describing the food differently.";
+    if (code === "invalid_json" || code === "empty_completion") return "Claude's answer came back garbled. Tap the button to try again.";
+    if (code === "cancelled") return "";
+    return "Something went wrong reaching Claude. Check your connection and try again.";
+  }
+
+  function normalizeItems(raw) {
+    if (!Array.isArray(raw)) return [];
+    return raw.map(function (it) {
+      return { name: String(it && it.name || "Food").slice(0, 80), portion: String(it && it.portion || "").slice(0, 80), cal: Math.max(0, Math.round(+(it && it.calories) || 0)) };
+    }).filter(function (it) { return it.name; });
+  }
+
+  function askClaude(firstText, followUp) {
+    if (!sample) { setStatus("Claude isn't available here. Use the food list or add foods by hand.", true); return; }
+    if (askCtl) askCtl.abort();
+    askCtl = new AbortController();
+    var ctl = askCtl;
+    if (!followUp) {
+      var intro = CLAUDE_RULES + "\n\n" + contextBlock() + "\n\nIt is " + guessMealWord() + " time for them.";
+      var desc = firstText ? "What I ate: " + firstText : "What I ate: see the photo.";
+      if (photos.length) desc += "\n(" + photos.length + " photo" + (photos.length > 1 ? "s" : "") + " attached.)";
+      turns = [{ role: "user", content: intro + "\n\n" + desc }];
+    } else {
+      turns.push({ role: "user", content: followUp + "\n\nUpdate the full list of items and reply with the same JSON shape." });
+    }
+    $("askBtn").disabled = true; $("replyBtn").disabled = true;
+    setStatus(photos.length ? "Claude is looking at your photo…" : "Claude is working it out…");
+    var opts = { signal: ctl.signal, cache: followUp ? false : true };
+    if (photos.length && imageLimits) opts.images = photos.slice(0, imageLimits.maxCount || 1);
+    sample.json(turns, opts).then(function (data) {
+      if (ctl !== askCtl) return;
+      var items = normalizeItems(data && data.items);
+      turns.push({ role: "assistant", content: JSON.stringify(data) });
+      var msg = String(data && data.reply || "");
+      if (data && data.question) msg += (msg ? " " : "") + String(data.question);
+      showReview({ items: items, source: photos.length ? "Estimated by Claude from your photo" : "Estimated by Claude", suggestedName: String(data && data.meal_name || "") }, msg);
+      $("replyLabel").textContent = data && data.question ? "Your answer" : "Anything to correct or add?";
+      setStatus("");
+    }).catch(function (e) {
+      if (ctl !== askCtl) return;
+      if (followUp) turns.pop();
+      setStatus(claudeErrorText(e), true);
+    }).then(function () {
+      if (ctl === askCtl) { $("askBtn").disabled = false; $("replyBtn").disabled = false; askCtl = null; }
+    });
+  }
+  function guessMealWord() { return { breakfast: "breakfast", lunch: "lunch", dinner: "dinner", snack: "snack" }[guessMeal()]; }
+
+  function showReview(r, claudeMsg) {
+    review = r;
+    $("reviewWrap").hidden = false;
+    $("claudeBubble").hidden = !claudeMsg;
+    $("claudeText").textContent = claudeMsg || "";
+    $("claudeBubble").querySelector(".who").textContent = sample ? "Claude" : "Note";
+    $("reviewSource").textContent = r.source;
+    $("reviewMeal").value = guessMeal();
+    var fromMeal = r.items.length && r.items.every(function (i) { return i.from === "meal"; });
+    $("rememberChk").checked = false;
+    $("rememberChk").parentNode.hidden = fromMeal;
+    $("rememberName").hidden = true;
+    $("rememberName").value = r.suggestedName || "";
+    $("replyText").value = "";
+    $("replyLabel").hidden = !sample; $("replyText").hidden = !sample; $("replyBtn").hidden = !sample;
+    $("replyBtn").textContent = r.source.indexOf("Claude") > -1 ? "Ask Claude to update it" : "Ask Claude to check it";
+    renderReview();
+  }
+
+  function renderReview() {
+    var box = $("reviewList");
+    box.textContent = "";
+    if (!review.items.length) {
+      var p = document.createElement("p"); p.className = "muted"; p.style.margin = "6px 0";
+      p.textContent = "No foods found yet.";
+      box.appendChild(p);
+    }
+    review.items.forEach(function (it, i) {
+      var row = document.createElement("div"); row.className = "ritem";
+      var n = document.createElement("div"); n.className = "rname";
+      n.textContent = it.name;
+      if (it.portion) { var s = document.createElement("small"); s.textContent = it.portion; n.appendChild(s); }
+      var inp = document.createElement("input");
+      inp.type = "number"; inp.inputMode = "numeric"; inp.min = "0"; inp.max = "10000"; inp.value = it.unknown && !it.cal ? "" : it.cal; inp.placeholder = "kcal";
+      inp.id = "rcal-" + i;
+      inp.setAttribute("aria-label", "Calories for " + it.name);
+      inp.addEventListener("input", function () { it.cal = Math.max(0, Math.round(+inp.value || 0)); updateTotal(); });
+      var x = document.createElement("button"); x.type = "button"; x.className = "btn-danger"; x.textContent = "✕";
+      x.setAttribute("aria-label", "Remove " + it.name);
+      x.addEventListener("click", function () { review.items.splice(i, 1); renderReview(); });
+      row.appendChild(n); row.appendChild(inp); row.appendChild(x);
+      box.appendChild(row);
+    });
+    updateTotal();
+    $("addAllBtn").disabled = !review.items.length;
+  }
+  function updateTotal() {
+    var t = review.items.reduce(function (s, i) { return s + (+i.cal || 0); }, 0);
+    $("reviewTotal").textContent = fmt(t) + " kcal";
+  }
+
+  function resetAssistant() {
+    if (askCtl) { askCtl.abort(); askCtl = null; }
+    review = null; turns = []; photos = [];
+    $("askText").value = "";
+    $("reviewWrap").hidden = true;
+    $("askBtn").disabled = false; $("replyBtn").disabled = false;
+    renderThumbs(); setStatus("");
+  }
+
+  $("askBtn").addEventListener("click", function () {
+    var text = $("askText").value.trim();
+    if (dictation && dictation.active()) dictation.stop();
+    if (!text && !photos.length) { setStatus("Tell me what you ate first, or add a photo.", true); $("askText").focus(); return; }
+    setStatus("");
+    if (!photos.length) {
+      var local = parseLocally(text);
+      if (!sample) {
+        var items = local.items.concat(local.unknown.map(function (u) { return { name: capital(u.replace(/^(a|an|one)\s+/, "")), cal: 0, portion: "", unknown: true }; }));
+        showReview({ items: items, source: "From your food list", suggestedName: capital(text).slice(0, 60) },
+          local.unknown.length ? "I don't know " + (local.unknown.length === 1 ? "this one" : "these") + " yet. Type the calories (check the packet, or search the food online) and I'll remember " + (local.unknown.length === 1 ? "it" : "them") + " next time." : "");
+        return;
+      }
+      if (local.items.length && !local.unknown.length) {
+        var allMeal = local.items.every(function (i) { return i.from === "meal"; });
+        showReview({ items: local.items, source: allMeal ? "From your regular meals" : "From your food list", suggestedName: capital(text).slice(0, 60) }, "");
+        return;
+      }
+    }
+    askClaude(text, null);
+  });
+
+  $("replyBtn").addEventListener("click", function () {
+    var t = $("replyText").value.trim();
+    if (!turns.length) {
+      // first time asking Claude about a list-based result: send the original text plus any note
+      askClaude($("askText").value.trim() + (t ? "\nExtra detail: " + t : ""), null);
+      return;
+    }
+    if (!t) { $("replyText").focus(); return; }
+    askClaude(null, t);
+  });
+
+  $("rememberChk").addEventListener("change", function () {
+    $("rememberName").hidden = !this.checked;
+    if (this.checked) $("rememberName").focus();
+  });
+
+  $("addAllBtn").addEventListener("click", function () {
+    if (!review || !review.items.length) return;
+    var missing = review.items.filter(function (i) { return i.unknown && !i.cal; });
+    if (missing.length) { setStatus("Type the calories for " + missing.map(function (i) { return i.name; }).join(", ") + " first.", true); return; }
+    setStatus("");
+    var meal = $("reviewMeal").value;
+    var named = review.items.map(function (i) {
+      var p = (i.portion || "").trim();
+      return { name: p && p.length < 40 && !i.from ? i.name + " (" + p + ")" : (i.from === "list" && /\d ?(g|ml)$/.test(p) ? i.name + " (" + p + ")" : i.name), cal: i.cal };
+    });
+    addEntries(named, meal);
+    if ($("rememberChk").checked) {
+      var name = $("rememberName").value.trim() || review.suggestedName || "My meal";
+      var existing = state.meals.filter(function (m) { return m.name.toLowerCase() === name.toLowerCase(); })[0];
+      var items = named;
+      if (existing) { existing.items = items; existing.uses = (existing.uses || 0) + 1; }
+      else state.meals.push({ id: uidGen(), name: name.slice(0, 60), items: items, uses: 1 });
+      saveMeals();
+      toast("Added, and saved “" + name + "” to your regular meals");
+    } else {
+      toast("Added " + review.items.length + (review.items.length === 1 ? " item" : " items"));
+    }
+    resetAssistant();
+    renderTracker();
+  });
+  $("discardBtn").addEventListener("click", resetAssistant);
+
+  // Photos
+  $("photoBtn").addEventListener("click", function () { $("photoInput").click(); });
+  $("photoInput").addEventListener("change", function () {
+    var f = this.files && this.files[0];
+    this.value = "";
+    if (!f) return;
+    var max = (imageLimits && imageLimits.maxCount) || 1;
+    if (imageLimits && f.size > imageLimits.maxInputBytes) { setStatus("That photo is too large. Try another one.", true); return; }
+    if (photos.length >= max) photos.shift();
+    photos.push(f);
+    renderThumbs();
+    setStatus("Add a few words if you like (for example “with olive oil”), then tap the button.");
+  });
+  function renderThumbs() {
+    var box = $("thumbs");
+    box.textContent = "";
+    photos.forEach(function (f, i) {
+      var d = document.createElement("div"); d.className = "thumb";
+      var img = document.createElement("img"); img.alt = "Food photo " + (i + 1);
+      img.src = URL.createObjectURL(f);
+      img.onload = function () { URL.revokeObjectURL(img.src); };
+      var x = document.createElement("button"); x.type = "button"; x.textContent = "✕"; x.setAttribute("aria-label", "Remove photo");
+      x.addEventListener("click", function () { photos.splice(i, 1); renderThumbs(); });
+      d.appendChild(img); d.appendChild(x); box.appendChild(d);
+    });
+  }
+
+  // Voice
+  var micTarget = "askText";
+  function micIdle() { $("micBtn").classList.remove("live"); $("micLabel").textContent = "Talk"; var d = $("micBtn").querySelector(".dot"); if (d) d.remove(); }
+  function micLive() {
+    $("micBtn").classList.add("live"); $("micLabel").textContent = "Stop";
+    if (!$("micBtn").querySelector(".dot")) { var d = document.createElement("span"); d.className = "dot"; $("micBtn").insertBefore(d, $("micBtn").firstChild); }
+  }
+  $("micBtn").addEventListener("click", function () {
+    if (!dictation) return;
+    if (dictation.active()) { dictation.stop(); return; }
+    micTarget = !$("reviewWrap").hidden ? "replyText" : "askText";
+    dictation.start().catch(function (e) {
+      if (e && e.code === "not_granted") { $("micBtn").hidden = true; $("micHint").hidden = false; }
+      else if (e && e.code !== "stopped" && e.code !== "dismissed") setStatus(e.code === "unavailable" ? "Talking isn't available here. Use your keyboard's microphone instead." : "The microphone didn't start. Try again.", true);
+    });
   });
 
   // ---------- Settings ----------
@@ -707,7 +1405,24 @@ footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 
     $("settingsGoalInfo").textContent = info;
     $("manualGoal").value = state.goal || "";
     $("goalError").textContent = "";
+    $("dataInfo").textContent = "Everything is saved only on this phone or computer, in this browser. Nothing is sent anywhere. If you clear your browser's history and site data, it will be erased, so save a backup file now and then.";
     $("dataMsg").textContent = "";
+    var ul = $("savedList");
+    ul.textContent = "";
+    state.meals.forEach(function (m) {
+      var li = document.createElement("li");
+      var n = document.createElement("span"); n.className = "name"; n.textContent = m.name;
+      var total = m.items.reduce(function (s, it) { return s + (+it.cal || 0); }, 0);
+      var s = document.createElement("small"); s.textContent = m.items.map(function (i) { return i.name; }).join(", ") + " · " + fmt(total) + " kcal";
+      n.appendChild(s);
+      var x = document.createElement("button"); x.className = "btn-danger"; x.textContent = "Delete";
+      x.addEventListener("click", function () {
+        state.meals = state.meals.filter(function (q) { return q.id !== m.id; });
+        saveMeals(); renderSettings();
+      });
+      li.appendChild(n); li.appendChild(x); ul.appendChild(li);
+    });
+    $("savedEmpty").hidden = !!state.meals.length;
   }
   $("openSettings").addEventListener("click", function () { renderSettings(); show("settings"); });
   $("closeSettings").addEventListener("click", function () { renderTracker(); show("tracker"); });
@@ -740,8 +1455,8 @@ footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 
       try {
         var s = JSON.parse(reader.result);
         if (!s || typeof s !== "object" || typeof s.log !== "object") throw new Error("bad");
-        state = { profile: s.profile || null, goal: s.goal || null, goalSource: s.goalSource, log: s.log || {} };
-        save();
+        state = { profile: s.profile || null, goal: s.goal || null, goalSource: s.goalSource || null, log: s.log || {}, meals: Array.isArray(s.meals) ? s.meals : [] };
+        writeLocal();
         renderSettings();
         $("dataMsg").textContent = "Backup restored.";
       } catch (e) {
@@ -751,29 +1466,101 @@ footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 
     reader.readAsText(file);
     this.value = "";
   });
+
   var resetArmed = false;
   $("resetAll").addEventListener("click", function () {
+    var btn = this;
     if (!resetArmed) {
       resetArmed = true;
-      this.textContent = "Tap again to erase everything (can't be undone)";
-      var btn = this;
+      btn.textContent = "Tap again to erase everything (can't be undone)";
       setTimeout(function () { resetArmed = false; btn.textContent = "Erase everything and start over"; }, 5000);
       return;
     }
     resetArmed = false;
-    this.textContent = "Erase everything and start over";
+    btn.textContent = "Erase everything and start over";
+    var keys = Object.keys(state.log);
     state = blank();
-    save();
+    writeLocal();
+    if (cloud) {
+      cloudWrite("settings", null); cloudWrite("meals", null);
+      keys.forEach(function (k) { cloudWrite("day-" + k, null); });
+    }
     form.reset();
     updateUnits();
     show("setup");
   });
 
   // ---------- Start ----------
+  var setupTouched = false;
+  form.addEventListener("input", function () { setupTouched = true; });
+  form.addEventListener("change", function () { setupTouched = true; });
+  function route() {
+    if (state.goal) {
+      if (!$("result").classList.contains("hidden") || (!$("setup").classList.contains("hidden") && setupTouched)) return;
+      renderTracker();
+      if ($("settings").classList.contains("hidden")) show("tracker");
+    } else if ($("tracker").classList.contains("hidden") && $("settings").classList.contains("hidden") && $("result").classList.contains("hidden")) {
+      show("setup");
+    }
+  }
+
   updateUnits();
   $("foodMeal").value = guessMeal();
-  if (state.goal) { renderTracker(); show("tracker"); }
-  else { show("setup"); }
+  var local = readLocal();
+  if (local) state = local;
+  route();
+
+  // Talking uses the phone browser's own free speech-to-text (Chrome on Android, Safari on iPhone).
+  function browserDictation() {
+    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return null;
+    var rec = null, live = false, stateFns = [], finalFns = [];
+    function emit(s, reason) { stateFns.forEach(function (f) { f({ state: s, reason: reason }); }); }
+    return {
+      active: function () { return live; },
+      start: function () {
+        try {
+          rec = new SR();
+          rec.lang = "en-US";
+          rec.continuous = true;
+          rec.interimResults = false;
+          var endReason = "stopped";
+          rec.onresult = function (e) {
+            for (var i = e.resultIndex; i < e.results.length; i++) {
+              if (e.results[i].isFinal) { var t = e.results[i][0].transcript; finalFns.forEach(function (f) { f({ text: " " + t.trim() }); }); }
+            }
+          };
+          rec.onerror = function (e) { endReason = e.error === "not-allowed" || e.error === "service-not-allowed" ? "not_granted" : (e.error === "no-speech" || e.error === "aborted" ? "stopped" : "upstream_error"); };
+          rec.onend = function () { live = false; emit("idle", endReason); };
+          rec.start();
+          live = true; emit("listening");
+          return Promise.resolve();
+        } catch (err) { live = false; emit("idle", "upstream_error"); return Promise.reject({ code: "upstream_error" }); }
+      },
+      stop: function () { if (rec) rec.stop(); return Promise.resolve(); },
+      onState: function (f) { stateFns.push(f); },
+      onFinal: function (f) { finalFns.push(f); }
+    };
+  }
+
+  function connectSpeech() {
+    var d = browserDictation();
+    dictation = d;
+    if (!d) { $("micHint").hidden = false; return; }
+    $("micBtn").hidden = false;
+    d.onState(function (e) {
+      if (e.state === "idle") {
+        micIdle();
+        if (e.reason === "not_granted") { setStatus("Microphone access is blocked. Allow it in your browser settings, or use your keyboard's microphone.", true); }
+        else if (e.reason === "upstream_error") { setStatus("The microphone stopped. Tap Talk to try again.", true); }
+      } else micLive();
+    });
+    d.onFinal(function (e) {
+      var t = $(micTarget);
+      t.value = t.value ? t.value + e.text : e.text.replace(/^\s+/, "");
+    });
+  }
+  connectSpeech();
 
   // Lets the site work offline and be installed on a phone's home screen (only when hosted, not when opened as a file)
   if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
