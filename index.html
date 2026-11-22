@@ -1,0 +1,777 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Calorie Tracker</title>
+<meta name="description" content="Work out your daily calorie goal and track what you eat each day.">
+<meta name="theme-color" content="#2f7d5b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Calories">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='46' fill='%232f7d5b'/%3E%3Cpath d='M50 22c-14 10-20 22-20 34a20 20 0 0 0 40 0c0-12-6-24-20-34z' fill='%23fff'/%3E%3C/svg%3E">
+<style>
+:root {
+  --bg: #f4f6f3;
+  --card: #ffffff;
+  --text: #1c2420;
+  --muted: #5d6b64;
+  --line: #dde3df;
+  --accent: #2f7d5b;
+  --accent-soft: #e2f1e9;
+  --accent-text: #ffffff;
+  --warn: #b5541c;
+  --warn-soft: #fbe9dd;
+  --danger: #b3261e;
+  --ring-track: #e4e9e6;
+  --shadow: 0 1px 2px rgba(0,0,0,.05), 0 4px 16px rgba(0,0,0,.05);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111613;
+    --card: #1b221e;
+    --text: #e8eeea;
+    --muted: #9aa8a1;
+    --line: #2c3631;
+    --accent: #5cc195;
+    --accent-soft: #1f3a2d;
+    --accent-text: #0d1a13;
+    --warn: #f0a170;
+    --warn-soft: #3a2619;
+    --danger: #ff8a80;
+    --ring-track: #2a332e;
+    --shadow: none;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111613;
+  --card: #1b221e;
+  --text: #e8eeea;
+  --muted: #9aa8a1;
+  --line: #2c3631;
+  --accent: #5cc195;
+  --accent-soft: #1f3a2d;
+  --accent-text: #0d1a13;
+  --warn: #f0a170;
+  --warn-soft: #3a2619;
+  --danger: #ff8a80;
+  --ring-track: #2a332e;
+  --shadow: none;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-text-size-adjust: 100%;
+  padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+}
+main { max-width: 520px; margin: 0 auto; padding-block: 16px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1 { font-size: 1.5rem; margin: 8px 0 4px; }
+h2 { font-size: 1.15rem; margin: 0 0 12px; }
+p { margin: 0 0 12px; }
+.muted { color: var(--muted); }
+.small { font-size: .875rem; }
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 18px;
+  margin: 14px 0;
+  box-shadow: var(--shadow);
+}
+.hidden { display: none !important; }
+
+/* Forms */
+label { display: block; font-weight: 600; margin: 14px 0 6px; }
+label .hint { font-weight: 400; color: var(--muted); font-size: .875rem; }
+input, select {
+  width: 100%;
+  font: inherit;
+  font-size: 16px; /* stops iPhone zooming in */
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 48px;
+}
+input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+.row { display: flex; gap: 10px; }
+.row > * { flex: 1; min-width: 0; }
+.choices { display: grid; gap: 8px; }
+.choices.two { grid-template-columns: 1fr 1fr; }
+.choice { position: relative; }
+.choice input { position: absolute; opacity: 0; pointer-events: none; }
+.choice span {
+  display: block;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg);
+  cursor: pointer;
+  font-weight: 400;
+}
+.choice span b { display: block; font-weight: 600; }
+.choice span small { color: var(--muted); }
+.choice input:checked + span { border-color: var(--accent); background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); }
+.choice input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.choice label { margin: 0; }
+
+button {
+  font: inherit;
+  font-weight: 600;
+  border: 0;
+  border-radius: 12px;
+  padding: 12px 18px;
+  min-height: 48px;
+  cursor: pointer;
+}
+.btn { background: var(--accent); color: var(--accent-text); width: 100%; margin-top: 18px; }
+.btn.secondary { background: transparent; color: var(--accent); border: 1px solid var(--line); }
+.btn-link { background: none; color: var(--accent); padding: 8px 4px; min-height: 0; font-weight: 600; }
+.btn-danger { background: none; color: var(--danger); padding: 8px; min-height: 0; }
+.error { color: var(--danger); font-size: .9rem; margin-top: 10px; }
+
+/* Results */
+.big-number { font-size: 2.6rem; font-weight: 800; line-height: 1.1; color: var(--accent); }
+.breakdown { width: 100%; border-collapse: collapse; margin-top: 8px; }
+.breakdown td { padding: 8px 0; border-top: 1px solid var(--line); }
+.breakdown td:last-child { text-align: right; font-weight: 600; white-space: nowrap; }
+.note { background: var(--warn-soft); color: var(--text); border-radius: 12px; padding: 12px 14px; margin-top: 12px; font-size: .925rem; }
+.note b { color: var(--warn); }
+
+/* Today */
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.daynav { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.daynav button { background: var(--card); color: var(--text); border: 1px solid var(--line); width: 48px; padding: 0; font-size: 1.3rem; }
+.daynav button:disabled { opacity: .35; cursor: default; }
+.daynav .day { text-align: center; font-weight: 700; }
+.daynav .day small { display: block; font-weight: 400; color: var(--muted); }
+.summary { display: flex; align-items: center; gap: 18px; }
+.ring { position: relative; width: 132px; height: 132px; flex: none; }
+.ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring .center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.ring .center b { font-size: 1.6rem; line-height: 1.1; }
+.ring .center small { color: var(--muted); font-size: .8rem; }
+.stats { flex: 1; display: grid; gap: 8px; }
+.stat { display: flex; justify-content: space-between; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+.stat:last-child { border: 0; padding: 0; }
+.stat b { white-space: nowrap; }
+.over { color: var(--warn); }
+
+.meal { margin-top: 14px; }
+.meal h3 { font-size: .95rem; margin: 0 0 6px; display: flex; justify-content: space-between; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.entries { list-style: none; margin: 0; padding: 0; }
+.entries li { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-top: 1px solid var(--line); }
+.entries li:first-child { border-top: 0; }
+.entries .name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.entries .cal { font-weight: 600; white-space: nowrap; }
+.empty { color: var(--muted); text-align: center; padding: 8px 0; }
+
+.quick { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.quick button { background: var(--accent-soft); color: var(--text); font-weight: 400; min-height: 40px; padding: 8px 12px; font-size: .9rem; }
+.quick button b { font-weight: 600; }
+
+footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 24px; }
+</style>
+</head>
+<body>
+<main>
+
+  <!-- ============ QUESTIONNAIRE ============ -->
+  <section id="setup" class="hidden">
+    <h1>Let's find your calorie goal</h1>
+    <p class="muted">Answer a few questions and we'll work out how many calories a day you can eat to lose weight safely.</p>
+
+    <form id="setupForm" class="card" novalidate>
+      <label>Units</label>
+      <div class="choices two">
+        <label class="choice"><input type="radio" name="units" value="metric" checked><span><b>kg / cm</b></span></label>
+        <label class="choice"><input type="radio" name="units" value="imperial"><span><b>lb / ft &amp; in</b></span></label>
+      </div>
+
+      <label>Sex <span class="hint">(used in the calorie formula)</span></label>
+      <div class="choices two">
+        <label class="choice"><input type="radio" name="sex" value="male" required><span><b>Male</b></span></label>
+        <label class="choice"><input type="radio" name="sex" value="female"><span><b>Female</b></span></label>
+      </div>
+
+      <label for="age">Age <span class="hint">(years)</span></label>
+      <input id="age" name="age" type="number" inputmode="numeric" min="15" max="100" placeholder="e.g. 30">
+
+      <div id="metricFields">
+        <label for="weightKg">Current weight <span class="hint">(kg)</span></label>
+        <input id="weightKg" name="weightKg" type="number" inputmode="decimal" step="0.1" min="30" max="350" placeholder="e.g. 85">
+        <label for="heightCm">Height <span class="hint">(cm)</span></label>
+        <input id="heightCm" name="heightCm" type="number" inputmode="decimal" min="120" max="230" placeholder="e.g. 175">
+      </div>
+
+      <div id="imperialFields" class="hidden">
+        <label for="weightLb">Current weight <span class="hint">(lb)</span></label>
+        <input id="weightLb" name="weightLb" type="number" inputmode="decimal" step="0.1" min="66" max="770" placeholder="e.g. 187">
+        <label>Height</label>
+        <div class="row">
+          <input id="heightFt" name="heightFt" type="number" inputmode="numeric" min="4" max="7" placeholder="feet" aria-label="Height feet">
+          <input id="heightIn" name="heightIn" type="number" inputmode="numeric" min="0" max="11" placeholder="inches" aria-label="Height inches">
+        </div>
+      </div>
+
+      <label>How active are you on a normal day?</label>
+      <div class="choices">
+        <label class="choice"><input type="radio" name="activity" value="1.2"><span><b>Mostly sitting</b><small>Desk job, little or no exercise</small></span></label>
+        <label class="choice"><input type="radio" name="activity" value="1.375"><span><b>Lightly active</b><small>Walking or light exercise 1–3 days a week</small></span></label>
+        <label class="choice"><input type="radio" name="activity" value="1.55"><span><b>Moderately active</b><small>Exercise 3–5 days a week</small></span></label>
+        <label class="choice"><input type="radio" name="activity" value="1.725"><span><b>Very active</b><small>Hard exercise 6–7 days a week</small></span></label>
+        <label class="choice"><input type="radio" name="activity" value="1.9"><span><b>Extremely active</b><small>Physical job plus daily training</small></span></label>
+      </div>
+
+      <label>How fast do you want to lose weight?</label>
+      <div class="choices" id="paceChoices">
+        <label class="choice"><input type="radio" name="pace" value="0.25"><span><b>Slow and easy</b><small class="pace-text" data-kg="0.25"></small></span></label>
+        <label class="choice"><input type="radio" name="pace" value="0.5" checked><span><b>Steady (recommended)</b><small class="pace-text" data-kg="0.5"></small></span></label>
+        <label class="choice"><input type="radio" name="pace" value="0.75"><span><b>Faster</b><small class="pace-text" data-kg="0.75"></small></span></label>
+        <label class="choice"><input type="radio" name="pace" value="0"><span><b>Just keep my weight the same</b><small>No weight loss, maintain</small></span></label>
+      </div>
+
+      <div id="setupError" class="error" role="alert"></div>
+      <button type="submit" class="btn">Calculate my goal</button>
+    </form>
+  </section>
+
+  <!-- ============ RESULT ============ -->
+  <section id="result" class="hidden">
+    <h1>Your daily calorie goal</h1>
+    <div class="card">
+      <div class="big-number"><span id="resGoal">0</span> <span style="font-size:1.1rem;font-weight:600">kcal / day</span></div>
+      <p class="muted" id="resSummary"></p>
+      <table class="breakdown">
+        <tr><td>Calories your body burns at rest</td><td id="resBmr"></td></tr>
+        <tr><td>Calories you burn on a normal day</td><td id="resTdee"></td></tr>
+        <tr><td>Cut for weight loss</td><td id="resDeficit"></td></tr>
+        <tr><td><b>Your daily goal</b></td><td id="resGoal2"></td></tr>
+      </table>
+      <div id="resNotes"></div>
+      <button class="btn" id="startTracking">Start tracking</button>
+      <button class="btn secondary" id="redoFromResult">Change my answers</button>
+    </div>
+    <p class="muted small">This is an estimate from the Mifflin-St Jeor formula, the one most dietitians use. Everyone is a bit different: if your weight hasn't moved after 3–4 weeks, redo the questionnaire with your new weight or lower your goal by about 100–200 kcal. It isn't medical advice, so check with a doctor if you have a health condition, are pregnant or breastfeeding.</p>
+  </section>
+
+  <!-- ============ TRACKER ============ -->
+  <section id="tracker" class="hidden">
+    <div class="topbar">
+      <h1>Calorie Tracker</h1>
+      <button class="btn-link" id="openSettings">Settings</button>
+    </div>
+
+    <div class="daynav card" style="padding:10px">
+      <button id="prevDay" aria-label="Previous day">‹</button>
+      <div class="day"><span id="dayLabel"></span><small id="dayDate"></small></div>
+      <button id="nextDay" aria-label="Next day">›</button>
+    </div>
+
+    <div class="card summary">
+      <div class="ring" aria-hidden="true">
+        <svg viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="52" fill="none" stroke="var(--ring-track)" stroke-width="12"/>
+          <circle id="ringBar" cx="60" cy="60" r="52" fill="none" stroke="var(--accent)" stroke-width="12" stroke-linecap="round" stroke-dasharray="326.73" stroke-dashoffset="326.73" style="transition:stroke-dashoffset .4s"/>
+        </svg>
+        <div class="center"><b id="ringNum">0</b><small id="ringLabel">left</small></div>
+      </div>
+      <div class="stats">
+        <div class="stat"><span class="muted">Goal</span><b id="statGoal">0</b></div>
+        <div class="stat"><span class="muted">Eaten</span><b id="statEaten">0</b></div>
+        <div class="stat"><span class="muted" id="statLeftLabel">Left</span><b id="statLeft">0</b></div>
+      </div>
+    </div>
+
+    <form id="addForm" class="card" autocomplete="off">
+      <h2>Add food</h2>
+      <label for="foodName" style="margin-top:0">What did you eat?</label>
+      <input id="foodName" list="foodSuggestions" placeholder="e.g. 2 eggs, toast" maxlength="80">
+      <datalist id="foodSuggestions"></datalist>
+      <div class="row">
+        <div>
+          <label for="foodCal">Calories</label>
+          <input id="foodCal" type="number" inputmode="numeric" min="0" max="10000" placeholder="kcal">
+        </div>
+        <div>
+          <label for="foodMeal">Meal</label>
+          <select id="foodMeal">
+            <option value="breakfast">Breakfast</option>
+            <option value="lunch">Lunch</option>
+            <option value="dinner">Dinner</option>
+            <option value="snack">Snack</option>
+          </select>
+        </div>
+      </div>
+      <div id="addError" class="error" role="alert"></div>
+      <button type="submit" class="btn">Add</button>
+      <div id="quickWrap" class="hidden">
+        <p class="muted small" style="margin:14px 0 0">Tap to add again:</p>
+        <div class="quick" id="quickList"></div>
+      </div>
+    </form>
+
+    <div class="card">
+      <h2>Eaten <span id="dayWord">today</span></h2>
+      <div id="mealsList"></div>
+    </div>
+  </section>
+
+  <!-- ============ SETTINGS ============ -->
+  <section id="settings" class="hidden">
+    <div class="topbar">
+      <h1>Settings</h1>
+      <button class="btn-link" id="closeSettings">Done</button>
+    </div>
+
+    <div class="card">
+      <h2>Daily goal</h2>
+      <p class="muted small" id="settingsGoalInfo"></p>
+      <label for="manualGoal">Set your own goal <span class="hint">(kcal)</span></label>
+      <input id="manualGoal" type="number" inputmode="numeric" min="800" max="6000">
+      <div id="goalError" class="error" role="alert"></div>
+      <button class="btn" id="saveGoal">Save goal</button>
+      <button class="btn secondary" id="redoSetup">Redo the questionnaire</button>
+    </div>
+
+    <div class="card">
+      <h2>Your data</h2>
+      <p class="muted small">Everything is saved only on this phone or computer, in this browser. Nothing is sent anywhere. If you clear your browser's history and site data, it will be erased, so you can save a backup file here.</p>
+      <button class="btn secondary" id="exportData">Save a backup file</button>
+      <button class="btn secondary" id="importBtn">Restore from a backup file</button>
+      <input type="file" id="importFile" accept="application/json,.json" class="hidden">
+      <div id="dataMsg" class="small" style="margin-top:10px" role="status"></div>
+      <button class="btn-danger" id="resetAll" style="margin-top:14px">Erase everything and start over</button>
+    </div>
+  </section>
+
+  <footer>Your data stays on this device.</footer>
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------- Storage ----------
+  var KEY = "calorieTracker.v1";
+  var state = load();
+
+  function blank() { return { profile: null, goal: null, log: {} }; }
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (!raw) return blank();
+      var s = JSON.parse(raw);
+      if (!s || typeof s !== "object") return blank();
+      s.log = s.log || {};
+      return s;
+    } catch (e) { return blank(); }
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* storage unavailable */ }
+  }
+
+  // ---------- Helpers ----------
+  function $(id) { return document.getElementById(id); }
+  function fmt(n) { return Math.round(n).toLocaleString(); }
+  function show(id) {
+    ["setup", "result", "tracker", "settings"].forEach(function (s) { $(s).classList.toggle("hidden", s !== id); });
+    window.scrollTo(0, 0);
+  }
+  function radio(form, name) {
+    var el = form.querySelector('input[name="' + name + '"]:checked');
+    return el ? el.value : null;
+  }
+  function setRadio(form, name, value) {
+    var el = form.querySelector('input[name="' + name + '"][value="' + value + '"]');
+    if (el) el.checked = true;
+  }
+  function dateKey(d) {
+    var m = d.getMonth() + 1, day = d.getDate();
+    return d.getFullYear() + "-" + (m < 10 ? "0" : "") + m + "-" + (day < 10 ? "0" : "") + day;
+  }
+  function parseKey(k) { var p = k.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]); }
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+  // ---------- Calorie maths ----------
+  var KCAL_PER_KG = 7700;   // roughly the energy in 1 kg of body fat
+  var MIN_MALE = 1500, MIN_FEMALE = 1200; // common safe minimums without medical supervision
+  var MAX_DEFICIT_SHARE = 0.25; // never cut more than 25% of daily burn
+
+  function calculate(p) {
+    var bmr = 10 * p.weightKg + 6.25 * p.heightCm - 5 * p.age + (p.sex === "male" ? 5 : -161);
+    var tdee = bmr * p.activity;
+    var notes = [];
+    var bmi = p.weightKg / Math.pow(p.heightCm / 100, 2);
+    var wanted = p.pace * KCAL_PER_KG / 7;
+    var deficit = wanted;
+
+    if (bmi < 18.5 && p.pace > 0) {
+      deficit = 0;
+      notes.push("<b>Heads up:</b> based on your height and weight you're already in the underweight range, so we've set your goal to keep your weight steady rather than lose more. It's worth talking to a doctor before trying to lose weight.");
+    } else {
+      if (deficit > tdee * MAX_DEFICIT_SHARE) {
+        deficit = tdee * MAX_DEFICIT_SHARE;
+        notes.push("<b>Note:</b> we've made the cut a little smaller than you picked so it's no more than a quarter of what you burn each day. That's easier to stick with and safer.");
+      }
+      var floor = p.sex === "male" ? MIN_MALE : MIN_FEMALE;
+      if (tdee - deficit < floor) {
+        var newDeficit = Math.max(0, tdee - floor);
+        if (newDeficit < deficit) {
+          deficit = newDeficit;
+          notes.push("<b>Note:</b> we don't go below " + fmt(floor) + " kcal a day, because eating less than that makes it hard to get enough nutrients. You'll lose weight a bit more slowly, and adding some walking or exercise will speed it up.");
+        }
+      }
+    }
+    var goal = Math.round((tdee - deficit) / 10) * 10;
+    var weeklyKg = deficit * 7 / KCAL_PER_KG;
+    return { bmr: bmr, tdee: tdee, deficit: deficit, goal: goal, weeklyKg: weeklyKg, bmi: bmi, notes: notes };
+  }
+
+  function weightText(kg, units, dp) {
+    var f = Math.pow(10, dp == null ? 2 : dp);
+    if (units === "imperial") { var lb = kg * 2.20462; return (Math.round(lb * Math.min(f, 10)) / Math.min(f, 10)) + " lb"; }
+    return (Math.round(kg * f) / f) + " kg";
+  }
+
+  // ---------- Questionnaire ----------
+  var form = $("setupForm");
+
+  function currentUnits() { return radio(form, "units") || "metric"; }
+  function updateUnits() {
+    var u = currentUnits();
+    $("metricFields").classList.toggle("hidden", u !== "metric");
+    $("imperialFields").classList.toggle("hidden", u !== "imperial");
+    Array.prototype.forEach.call(document.querySelectorAll(".pace-text"), function (el) {
+      el.textContent = "About " + weightText(+el.dataset.kg, u) + " a week";
+    });
+  }
+  Array.prototype.forEach.call(form.querySelectorAll('input[name="units"]'), function (el) {
+    el.addEventListener("change", function () {
+      // carry over anything already typed when switching units
+      if (el.value === "imperial") {
+        if ($("weightKg").value) $("weightLb").value = Math.round($("weightKg").value * 2.20462 * 10) / 10;
+        if ($("heightCm").value) { var ti = $("heightCm").value / 2.54; $("heightFt").value = Math.floor(ti / 12); $("heightIn").value = Math.round(ti % 12); }
+      } else {
+        if ($("weightLb").value) $("weightKg").value = Math.round($("weightLb").value / 2.20462 * 10) / 10;
+        if ($("heightFt").value) $("heightCm").value = Math.round(((+$("heightFt").value) * 12 + (+$("heightIn").value || 0)) * 2.54);
+      }
+      updateUnits();
+    });
+  });
+
+  function fillForm(p) {
+    if (!p) return;
+    setRadio(form, "units", p.units || "metric");
+    setRadio(form, "sex", p.sex);
+    setRadio(form, "activity", String(p.activity));
+    setRadio(form, "pace", String(p.pace));
+    $("age").value = p.age;
+    $("weightKg").value = Math.round(p.weightKg * 10) / 10;
+    $("heightCm").value = Math.round(p.heightCm);
+    $("weightLb").value = Math.round(p.weightKg * 2.20462 * 10) / 10;
+    var ti = p.heightCm / 2.54;
+    $("heightFt").value = Math.floor(ti / 12);
+    $("heightIn").value = Math.round(ti % 12);
+    updateUnits();
+  }
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var err = $("setupError");
+    err.textContent = "";
+    var units = currentUnits();
+    var sex = radio(form, "sex");
+    var age = parseFloat($("age").value);
+    var activity = parseFloat(radio(form, "activity"));
+    var pace = parseFloat(radio(form, "pace"));
+    var weightKg, heightCm;
+    if (units === "metric") {
+      weightKg = parseFloat($("weightKg").value);
+      heightCm = parseFloat($("heightCm").value);
+    } else {
+      weightKg = parseFloat($("weightLb").value) / 2.20462;
+      heightCm = ((parseFloat($("heightFt").value) || 0) * 12 + (parseFloat($("heightIn").value) || 0)) * 2.54;
+    }
+    var problems = [];
+    if (!sex) problems.push("choose male or female");
+    if (!(age >= 15 && age <= 100)) problems.push("enter an age between 15 and 100");
+    if (!(weightKg >= 30 && weightKg <= 350)) problems.push("enter your weight");
+    if (!(heightCm >= 120 && heightCm <= 230)) problems.push("enter your height");
+    if (!activity) problems.push("pick how active you are");
+    if (isNaN(pace)) problems.push("pick how fast you want to lose weight");
+    if (age < 18 && pace > 0) problems.push("people under 18 should only lose weight with a doctor's help, so please pick “keep my weight the same”");
+    if (problems.length) {
+      err.textContent = "Please " + problems.join(", ") + ".";
+      return;
+    }
+    state.profile = { units: units, sex: sex, age: age, weightKg: weightKg, heightCm: heightCm, activity: activity, pace: pace, date: dateKey(new Date()) };
+    var r = calculate(state.profile);
+    state.goal = r.goal;
+    state.goalSource = "calculated";
+    save();
+    renderResult(r);
+    show("result");
+  });
+
+  function renderResult(r) {
+    var units = state.profile.units;
+    $("resGoal").textContent = fmt(r.goal);
+    $("resGoal2").textContent = fmt(r.goal) + " kcal";
+    $("resBmr").textContent = fmt(r.bmr) + " kcal";
+    $("resTdee").textContent = fmt(r.tdee) + " kcal";
+    $("resDeficit").textContent = r.deficit > 0 ? "− " + fmt(r.deficit) + " kcal" : "none";
+    $("resSummary").textContent = r.deficit > 0
+      ? "Eat about this much each day and you should lose around " + weightText(r.weeklyKg, units) + " a week, or roughly " + weightText(r.weeklyKg * 4.3, units, 1) + " a month."
+      : "Eat about this much each day to keep your weight where it is.";
+    $("resNotes").innerHTML = r.notes.map(function (n) { return '<div class="note">' + n + "</div>"; }).join("");
+  }
+
+  $("startTracking").addEventListener("click", function () { viewDate = new Date(); $("foodMeal").value = guessMeal(); renderTracker(); show("tracker"); });
+  $("redoFromResult").addEventListener("click", function () { fillForm(state.profile); show("setup"); });
+
+  // ---------- Tracker ----------
+  var viewDate = new Date();
+  var MEALS = [["breakfast", "Breakfast"], ["lunch", "Lunch"], ["dinner", "Dinner"], ["snack", "Snacks"]];
+
+  function guessMeal() {
+    var h = new Date().getHours();
+    if (h < 11) return "breakfast";
+    if (h < 15) return "lunch";
+    if (h >= 17 && h < 22) return "dinner";
+    return "snack";
+  }
+
+  function entriesFor(key) { return state.log[key] || []; }
+
+  function dayLabel(d) {
+    var today = new Date(); today.setHours(0, 0, 0, 0);
+    var x = new Date(d); x.setHours(0, 0, 0, 0);
+    var diff = Math.round((today - x) / 86400000);
+    if (diff === 0) return "Today";
+    if (diff === 1) return "Yesterday";
+    return x.toLocaleDateString(undefined, { weekday: "long" });
+  }
+
+  function renderTracker() {
+    var key = dateKey(viewDate);
+    var entries = entriesFor(key);
+    var goal = state.goal || 0;
+    var eaten = entries.reduce(function (s, e) { return s + (+e.cal || 0); }, 0);
+    var left = goal - eaten;
+    var isToday = key === dateKey(new Date());
+
+    $("dayLabel").textContent = dayLabel(viewDate);
+    $("dayDate").textContent = viewDate.toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" });
+    $("nextDay").disabled = isToday;
+    $("dayWord").textContent = isToday ? "today" : "on this day";
+
+    $("statGoal").textContent = fmt(goal);
+    $("statEaten").textContent = fmt(eaten);
+    $("statLeft").textContent = fmt(Math.abs(left));
+    $("statLeftLabel").textContent = left >= 0 ? "Left" : "Over";
+    $("statLeft").classList.toggle("over", left < 0);
+    $("ringNum").textContent = fmt(Math.abs(left));
+    $("ringLabel").textContent = left >= 0 ? "kcal left" : "kcal over";
+    $("ringNum").classList.toggle("over", left < 0);
+    var C = 2 * Math.PI * 52;
+    var frac = goal > 0 ? Math.min(eaten / goal, 1) : 0;
+    var bar = $("ringBar");
+    bar.style.strokeDashoffset = C * (1 - frac);
+    bar.style.stroke = left < 0 ? "var(--warn)" : "var(--accent)";
+
+    // meals list
+    var html = "";
+    if (!entries.length) {
+      html = '<p class="empty">Nothing logged yet. Add what you eat above.</p>';
+    } else {
+      MEALS.forEach(function (m) {
+        var list = entries.filter(function (e) { return (e.meal || "snack") === m[0]; });
+        if (!list.length) return;
+        var sub = list.reduce(function (s, e) { return s + (+e.cal || 0); }, 0);
+        html += '<div class="meal"><h3><span>' + m[1] + "</span><span>" + fmt(sub) + ' kcal</span></h3><ul class="entries">';
+        list.forEach(function (e) {
+          html += '<li><span class="name"></span><span class="cal">' + fmt(e.cal) + ' kcal</span><button class="btn-danger" data-del="' + e.id + '" aria-label="Remove">✕</button></li>';
+        });
+        html += "</ul></div>";
+      });
+    }
+    var wrap = $("mealsList");
+    wrap.innerHTML = html;
+    // set names via textContent so whatever was typed is shown safely
+    var names = wrap.querySelectorAll(".name");
+    var ordered = [];
+    MEALS.forEach(function (m) { entries.forEach(function (e) { if ((e.meal || "snack") === m[0]) ordered.push(e); }); });
+    Array.prototype.forEach.call(names, function (el, i) { el.textContent = ordered[i].name; });
+
+    renderSuggestions();
+  }
+
+  // Remember foods you've eaten before so you can re-add them in one tap
+  function knownFoods() {
+    var map = {};
+    Object.keys(state.log).sort().forEach(function (k) {
+      state.log[k].forEach(function (e) {
+        var n = e.name.trim();
+        var id = n.toLowerCase();
+        var prev = map[id];
+        map[id] = { name: n, cal: e.cal, count: (prev ? prev.count : 0) + 1, last: k };
+      });
+    });
+    return Object.keys(map).map(function (k) { return map[k]; });
+  }
+
+  function renderSuggestions() {
+    var foods = knownFoods();
+    var dl = $("foodSuggestions");
+    dl.innerHTML = "";
+    foods.forEach(function (f) { var o = document.createElement("option"); o.value = f.name; dl.appendChild(o); });
+
+    var top = foods.sort(function (a, b) { return b.count - a.count || (b.last > a.last ? 1 : -1); }).slice(0, 6);
+    var q = $("quickList");
+    q.innerHTML = "";
+    top.forEach(function (f) {
+      var b = document.createElement("button");
+      b.type = "button";
+      var nm = document.createElement("span"); nm.textContent = f.name + " ";
+      var c = document.createElement("b"); c.textContent = fmt(f.cal);
+      b.appendChild(nm); b.appendChild(c);
+      b.addEventListener("click", function () { addEntry(f.name, f.cal, $("foodMeal").value); });
+      q.appendChild(b);
+    });
+    $("quickWrap").classList.toggle("hidden", !top.length);
+  }
+
+  function addEntry(name, cal, meal) {
+    var key = dateKey(viewDate);
+    state.log[key] = entriesFor(key).concat([{ id: uid(), name: name, cal: Math.round(cal), meal: meal }]);
+    save();
+    renderTracker();
+  }
+
+  $("foodName").addEventListener("input", function () {
+    var v = this.value.trim().toLowerCase();
+    if (!v || $("foodCal").value) return;
+    var match = knownFoods().filter(function (f) { return f.name.toLowerCase() === v; })[0];
+    if (match) $("foodCal").value = match.cal;
+  });
+
+  $("addForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var name = $("foodName").value.trim();
+    var cal = parseFloat($("foodCal").value);
+    var err = $("addError");
+    err.textContent = "";
+    if (!name) { err.textContent = "Type what you ate."; $("foodName").focus(); return; }
+    if (isNaN(cal) || cal < 0 || cal > 10000) { err.textContent = "Enter how many calories it had (a number)."; $("foodCal").focus(); return; }
+    addEntry(name, cal, $("foodMeal").value);
+    $("foodName").value = "";
+    $("foodCal").value = "";
+    $("foodName").blur(); $("foodCal").blur();
+  });
+
+  $("mealsList").addEventListener("click", function (e) {
+    var id = e.target.getAttribute && e.target.getAttribute("data-del");
+    if (!id) return;
+    var key = dateKey(viewDate);
+    state.log[key] = entriesFor(key).filter(function (x) { return x.id !== id; });
+    if (!state.log[key].length) delete state.log[key];
+    save();
+    renderTracker();
+  });
+
+  $("prevDay").addEventListener("click", function () { viewDate.setDate(viewDate.getDate() - 1); renderTracker(); });
+  $("nextDay").addEventListener("click", function () {
+    if (dateKey(viewDate) === dateKey(new Date())) return;
+    viewDate.setDate(viewDate.getDate() + 1); renderTracker();
+  });
+
+  // ---------- Settings ----------
+  function renderSettings() {
+    var info = "";
+    if (state.profile) {
+      var r = calculate(state.profile);
+      info = "The questionnaire suggested " + fmt(r.goal) + " kcal a day (answered " + parseKey(state.profile.date || dateKey(new Date())).toLocaleDateString() + ").";
+      if (state.goalSource === "manual") info += " You've set your own goal instead.";
+      info += " As you lose weight, redo the questionnaire every month or so, because your body needs a little less.";
+    }
+    $("settingsGoalInfo").textContent = info;
+    $("manualGoal").value = state.goal || "";
+    $("goalError").textContent = "";
+    $("dataMsg").textContent = "";
+  }
+  $("openSettings").addEventListener("click", function () { renderSettings(); show("settings"); });
+  $("closeSettings").addEventListener("click", function () { renderTracker(); show("tracker"); });
+  $("saveGoal").addEventListener("click", function () {
+    var g = parseFloat($("manualGoal").value);
+    if (isNaN(g) || g < 800 || g > 6000) { $("goalError").textContent = "Enter a goal between 800 and 6,000 kcal."; return; }
+    state.goal = Math.round(g);
+    state.goalSource = "manual";
+    save();
+    renderTracker();
+    show("tracker");
+  });
+  $("redoSetup").addEventListener("click", function () { fillForm(state.profile); show("setup"); });
+
+  $("exportData").addEventListener("click", function () {
+    var blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "calorie-tracker-backup-" + dateKey(new Date()) + ".json";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+    $("dataMsg").textContent = "Backup file saved to your downloads.";
+  });
+  $("importBtn").addEventListener("click", function () { $("importFile").click(); });
+  $("importFile").addEventListener("change", function () {
+    var file = this.files && this.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var s = JSON.parse(reader.result);
+        if (!s || typeof s !== "object" || typeof s.log !== "object") throw new Error("bad");
+        state = { profile: s.profile || null, goal: s.goal || null, goalSource: s.goalSource, log: s.log || {} };
+        save();
+        renderSettings();
+        $("dataMsg").textContent = "Backup restored.";
+      } catch (e) {
+        $("dataMsg").textContent = "That file doesn't look like a calorie tracker backup.";
+      }
+    };
+    reader.readAsText(file);
+    this.value = "";
+  });
+  var resetArmed = false;
+  $("resetAll").addEventListener("click", function () {
+    if (!resetArmed) {
+      resetArmed = true;
+      this.textContent = "Tap again to erase everything (can't be undone)";
+      var btn = this;
+      setTimeout(function () { resetArmed = false; btn.textContent = "Erase everything and start over"; }, 5000);
+      return;
+    }
+    resetArmed = false;
+    this.textContent = "Erase everything and start over";
+    state = blank();
+    save();
+    form.reset();
+    updateUnits();
+    show("setup");
+  });
+
+  // ---------- Start ----------
+  updateUnits();
+  $("foodMeal").value = guessMeal();
+  if (state.goal) { renderTracker(); show("tracker"); }
+  else { show("setup"); }
+})();
+</script>
+</body>
+</html>
