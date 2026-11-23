@@ -1,6 +1,6 @@
 // Lets the tracker open without an internet connection once it has been visited.
 // Bump VERSION whenever the site's files change so phones pick up the new version.
-var VERSION = "v2";
+var VERSION = "v3";
 var CACHE = "calorie-tracker-" + VERSION;
 var FILES = ["./", "./index.html", "./manifest.webmanifest", "./icons/icon.svg", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png"];
 

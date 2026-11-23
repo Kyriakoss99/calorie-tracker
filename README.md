@@ -18,6 +18,12 @@ Talking uses your phone browser's own free speech-to-text (Chrome on Android wor
 
 A smarter version that also understands photos and any dish, powered by Claude, runs inside Claude (see the project thread).
 
+## Nutrients and meal verdicts
+
+Besides calories, it counts **protein, carbs, fat, fibre and sugar** for every food it knows, and shows bars for each under **Nutrients** with a daily target (protein from your weight, the rest from your calorie goal).
+
+Every time you add a meal, it tells you whether it was a good choice: a short rating (Great choice, Good choice, Okay or Could be better), what's good or missing (for example "not much protein"), a tip, and whether to keep eating it. Tap the rating under the meal to see the details. Your regular meals remember their rating, so you can see at a glance which ones are worth repeating. The Claude version asks Claude for the verdict; the GitHub version uses simple built-in rules.
+
 ## How to open it
 
 **On your computer:** download `index.html` from this repository and double-click it. It opens in your web browser. No installation is needed.
