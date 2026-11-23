@@ -27,6 +27,8 @@
   --warn-soft: #fbe9dd;
   --danger: #b3261e;
   --ring-track: #e4e9e6;
+  --good: #1f6b8f;
+  --good-soft: #e0f0f7;
   --shadow: 0 1px 2px rgba(0,0,0,.05), 0 4px 16px rgba(0,0,0,.05);
 }
 @media (prefers-color-scheme: dark) {
@@ -43,6 +45,8 @@
     --warn-soft: #3a2619;
     --danger: #ff8a80;
     --ring-track: #2a332e;
+    --good: #7cc6ea;
+    --good-soft: #17323f;
     --shadow: none;
     color-scheme: dark;
   }
@@ -60,6 +64,8 @@
   --warn-soft: #3a2619;
   --danger: #ff8a80;
   --ring-track: #2a332e;
+  --good: #7cc6ea;
+  --good-soft: #17323f;
   --shadow: none;
   color-scheme: dark;
 }
@@ -244,6 +250,30 @@ details.manual[open] summary::after { content: "\2212"; }
 .savedlist .name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .savedlist .name small { display: block; color: var(--muted); }
 .sync { font-size: .8rem; color: var(--muted); }
+.macros { display: grid; gap: 10px; }
+.mrow { display: grid; grid-template-columns: 64px 1fr 92px; gap: 10px; align-items: center; font-size: .925rem; }
+.mrow .mbar { height: 10px; border-radius: 999px; background: var(--ring-track); overflow: hidden; }
+.mrow .mbar span { display: block; height: 100%; border-radius: 999px; background: var(--accent); transition: width .4s; }
+.mrow .mbar span.warn { background: var(--warn); }
+.mrow b { font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 600; text-align: right; }
+.mrow .mname { color: var(--muted); }
+.mnote { font-size: .8rem; color: var(--muted); margin: 2px 0 0; }
+.ritem .macro { display: block; color: var(--muted); font-size: .78rem; font-variant-numeric: tabular-nums; }
+.mtotal { font-size: .85rem; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; margin-top: 2px; }
+.verdict { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-top: 12px; background: var(--bg); }
+.verdict .vhead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+.pill { display: inline-block; font-size: .78rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+.pill.great { background: var(--good-soft); color: var(--good); }
+.pill.good { background: var(--accent-soft); color: var(--accent); }
+.pill.okay { background: var(--bg); color: var(--muted); border: 1px solid var(--line); }
+.pill.poor { background: var(--warn-soft); color: var(--warn); }
+.verdict ul { margin: 6px 0 0; padding-left: 18px; }
+.verdict li { margin: 2px 0; }
+.verdict .keep { font-weight: 600; margin-top: 6px; }
+.verdict .last { font-size: .85rem; color: var(--muted); margin-top: 6px; }
+.mealnote { margin: 6px 0 4px; padding: 8px 10px; border-radius: 10px; background: var(--bg); font-size: .875rem; }
+.mealnote .pill { margin-right: 6px; }
+.mealnote summary { cursor: pointer; list-style-position: outside; }
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-size: .9rem; font-weight: 600; z-index: 20; max-width: calc(100% - 32px); text-align: center; }
 </style>
 <body>
@@ -355,6 +385,12 @@ details.manual[open] summary::after { content: "\2212"; }
       </div>
     </div>
 
+    <div class="card" id="macroCard">
+      <h2>Nutrients</h2>
+      <div class="macros" id="macroBars"></div>
+      <p class="mnote" id="macroNote"></p>
+    </div>
+
     <!-- Assistant -->
     <div class="card assist" id="assist">
       <h2>What did you eat?</h2>
@@ -382,6 +418,14 @@ details.manual[open] summary::after { content: "\2212"; }
           <p style="margin:0 0 6px"><span class="source" id="reviewSource"></span></p>
           <div id="reviewList"></div>
           <div class="total"><span>Total</span><span id="reviewTotal">0 kcal</span></div>
+          <div class="mtotal" id="reviewMacros"></div>
+        </div>
+        <div class="verdict" id="verdictBox" hidden>
+          <div class="vhead"><span class="pill" id="verdictPill"></span><b id="verdictTitle"></b></div>
+          <div id="verdictText"></div>
+          <ul id="verdictList"></ul>
+          <div class="keep" id="verdictKeep"></div>
+          <div class="last" id="verdictLast" hidden></div>
         </div>
         <label for="replyText" id="replyLabel">Anything to correct or add?</label>
         <textarea id="replyText" maxlength="800" placeholder="e.g. it was a big plate, and the sauce was creamy"></textarea>
@@ -497,13 +541,13 @@ details.manual[open] summary::after { content: "\2212"; }
   var state = blank();
   var db = null, uid = null, cloud = false;
 
-  function blank() { return { profile: null, goal: null, goalSource: null, log: {}, meals: [] }; }
+  function blank() { return { profile: null, goal: null, goalSource: null, log: {}, notes: {}, meals: [], verdicts: {} }; }
 
   function readLocal() {
     try {
       // fall back to the first version's saved data, if this browser has it
       var s = JSON.parse(localStorage.getItem(LOCAL_KEY) || localStorage.getItem("calorieTracker.v1") || "null");
-      if (s && typeof s === "object") { s.log = s.log || {}; s.meals = s.meals || []; return s; }
+      if (s && typeof s === "object") { s.log = s.log || {}; s.meals = s.meals || []; s.notes = s.notes || {}; s.verdicts = s.verdicts || {}; return s; }
     } catch (e) { /* no local copy */ }
     return null;
   }
@@ -528,12 +572,14 @@ details.manual[open] summary::after { content: "\2212"; }
   }
   function saveDay(key) {
     writeLocal();
-    var list = state.log[key];
-    cloudWrite("day-" + key, list && list.length ? { entries: list } : null);
+    var list = state.log[key], notes = (state.notes[key] || []).filter(function (n) { return list && list.some(function (e) { return e.note === n.id; }); });
+    state.notes[key] = notes;
+    if (!notes.length) delete state.notes[key];
+    cloudWrite("day-" + key, list && list.length ? { entries: list, notes: notes } : null);
   }
   function saveMeals() {
     writeLocal();
-    cloudWrite("meals", { list: state.meals });
+    cloudWrite("meals", { list: state.meals, verdicts: state.verdicts });
   }
 
   function applyDocs(docs) {
@@ -541,8 +587,8 @@ details.manual[open] summary::after { content: "\2212"; }
     docs.forEach(function (d) {
       var body = d.data() || {};
       if (d.id === "settings") { s.profile = body.profile || null; s.goal = body.goal || null; s.goalSource = body.goalSource || null; }
-      else if (d.id === "meals") { s.meals = Array.isArray(body.list) ? body.list.slice() : []; }
-      else if (d.id.indexOf("day-") === 0 && Array.isArray(body.entries)) { s.log[d.id.slice(4)] = body.entries.slice(); }
+      else if (d.id === "meals") { s.meals = Array.isArray(body.list) ? body.list.slice() : []; s.verdicts = body.verdicts && typeof body.verdicts === "object" ? Object.assign({}, body.verdicts) : {}; }
+      else if (d.id.indexOf("day-") === 0 && Array.isArray(body.entries)) { s.log[d.id.slice(4)] = body.entries.slice(); if (Array.isArray(body.notes) && body.notes.length) s.notes[d.id.slice(4)] = body.notes.slice(); }
     });
     return s;
   }
@@ -580,146 +626,152 @@ details.manual[open] summary::after { content: "\2212"; }
   // [names (first is shown), kcal per serving, serving description, grams per serving or 0]
   // Values are typical averages; Claude handles anything not listed or unusual.
   var FOODS = [
-    ["egg|eggs|boiled egg|fried egg", 78, "1 egg", 50],
-    ["scrambled eggs", 180, "2 eggs", 0],
-    ["omelette|omelet", 250, "2-egg omelette", 0],
-    ["bread|slice of bread|slice of toast|toast", 80, "1 slice", 30],
-    ["rye bread|rugbrød|rugbrod", 100, "1 slice", 45],
-    ["bread roll|roll|bun|bolle", 150, "1 roll", 55],
-    ["croissant", 230, "1 croissant", 55],
-    ["bagel", 250, "1 bagel", 95],
-    ["pita|pita bread", 170, "1 pita", 60],
-    ["tortilla|wrap", 140, "1 tortilla", 45],
-    ["butter", 35, "1 tsp", 5],
-    ["margarine", 35, "1 tsp", 5],
-    ["peanut butter", 95, "1 tbsp", 16],
-    ["jam|marmalade", 50, "1 tbsp", 20],
-    ["honey", 64, "1 tbsp", 21],
-    ["nutella|chocolate spread", 100, "1 tbsp", 19],
-    ["cheese|cheddar|slice of cheese", 80, "1 slice", 20],
-    ["feta|feta cheese", 75, "30 g", 30],
-    ["halloumi", 95, "30 g", 30],
-    ["mozzarella", 85, "30 g", 30],
-    ["parmesan", 40, "1 tbsp grated", 10],
-    ["cream cheese", 50, "1 tbsp", 15],
-    ["ham|slice of ham", 30, "1 slice", 20],
-    ["salami", 40, "1 slice", 10],
-    ["bacon|rasher of bacon", 45, "1 rasher", 10],
-    ["sausage|sausages|pølse|polse", 190, "1 sausage", 70],
-    ["hot dog", 290, "1 hot dog", 0],
-    ["oatmeal|porridge|oats|havregrød|havregrod", 150, "1 bowl (40 g oats)", 0],
-    ["muesli|granola", 200, "1 serving (50 g)", 50],
-    ["cereal|cornflakes", 150, "1 bowl (40 g)", 40],
-    ["yogurt|yoghurt|plain yogurt", 100, "1 small pot (150 g)", 150],
-    ["greek yogurt|greek yoghurt", 145, "150 g", 150],
-    ["skyr", 95, "150 g", 150],
-    ["milk|glass of milk", 120, "1 glass (250 ml)", 250],
-    ["skimmed milk|skim milk", 85, "1 glass (250 ml)", 250],
-    ["oat milk", 110, "1 glass (250 ml)", 250],
-    ["coffee|black coffee|espresso|americano", 2, "1 cup", 0],
-    ["coffee with milk|latte|cafe latte|flat white", 120, "1 cup", 0],
-    ["cappuccino", 90, "1 cup", 0],
-    ["tea", 2, "1 cup", 0],
-    ["sugar|teaspoon of sugar", 16, "1 tsp", 4],
-    ["orange juice|juice|apple juice", 110, "1 glass (250 ml)", 250],
-    ["cola|coke|soda|soft drink", 140, "1 can (330 ml)", 0],
-    ["diet coke|coke zero|diet soda|pepsi max|cola zero", 1, "1 can", 0],
-    ["beer|øl|ol", 150, "1 bottle (330 ml)", 0],
-    ["wine|glass of wine|red wine|white wine", 125, "1 glass (150 ml)", 0],
-    ["smoothie", 180, "1 glass (250 ml)", 250],
-    ["protein shake", 150, "1 shake", 0],
-    ["water|sparkling water", 0, "1 glass", 0],
-    ["apple|apples", 95, "1 apple", 180],
-    ["banana|bananas", 105, "1 banana", 120],
-    ["orange|oranges", 60, "1 orange", 130],
-    ["pear", 100, "1 pear", 180],
-    ["grapes", 70, "1 handful (100 g)", 100],
-    ["strawberries", 35, "1 cup (110 g)", 110],
-    ["blueberries", 85, "1 cup (150 g)", 150],
-    ["watermelon", 45, "1 slice (150 g)", 150],
-    ["melon", 50, "1 slice (150 g)", 150],
-    ["kiwi", 45, "1 kiwi", 75],
-    ["peach|nectarine", 60, "1 fruit", 150],
-    ["mango", 100, "1 cup (165 g)", 165],
-    ["dates", 66, "1 date", 24],
-    ["raisins", 85, "1 small handful (30 g)", 30],
-    ["avocado", 240, "1 avocado", 150],
-    ["tomato|tomatoes", 20, "1 tomato", 120],
-    ["cucumber", 15, "half a cucumber", 150],
-    ["carrot|carrots", 25, "1 carrot", 60],
-    ["salad|green salad|side salad", 50, "1 side salad, no dressing", 0],
-    ["greek salad|horiatiki", 300, "1 bowl", 0],
-    ["caesar salad", 400, "1 bowl", 0],
-    ["broccoli", 35, "1 cup (90 g)", 90],
-    ["spinach", 7, "1 cup raw", 30],
-    ["potato|potatoes|boiled potatoes", 130, "1 medium potato", 170],
-    ["baked potato|jacket potato", 160, "1 medium", 170],
-    ["mashed potatoes|mash", 210, "1 cup", 210],
-    ["fries|chips|french fries|pommes frites", 365, "1 medium portion", 115],
-    ["sweet potato", 115, "1 medium", 130],
-    ["rice|white rice|cooked rice", 205, "1 cup cooked", 160],
-    ["brown rice", 215, "1 cup cooked", 195],
-    ["pasta|spaghetti|penne|noodles", 220, "1 cup cooked", 140],
-    ["couscous", 175, "1 cup cooked", 155],
-    ["quinoa", 220, "1 cup cooked", 185],
-    ["chicken breast|chicken|grilled chicken", 165, "100 g cooked", 100],
-    ["chicken thigh", 210, "100 g cooked", 100],
-    ["turkey", 150, "100 g cooked", 100],
-    ["beef|steak", 250, "100 g cooked", 100],
-    ["minced beef|ground beef|mince", 250, "100 g cooked", 100],
-    ["pork|pork chop", 240, "100 g cooked", 100],
-    ["meatballs|frikadeller|keftedes", 75, "1 meatball", 30],
-    ["lamb", 280, "100 g cooked", 100],
-    ["salmon", 210, "100 g cooked", 100],
-    ["tuna|canned tuna", 110, "1 small can drained (100 g)", 100],
-    ["cod|white fish|fish", 105, "100 g cooked", 100],
-    ["shrimp|prawns", 100, "100 g cooked", 100],
-    ["herring|sild", 160, "1 serving (60 g)", 60],
-    ["tofu", 145, "100 g", 100],
-    ["beans|kidney beans|chickpeas", 220, "1 cup cooked", 170],
-    ["lentils", 230, "1 cup cooked", 200],
-    ["hummus", 70, "2 tbsp", 30],
-    ["tzatziki", 40, "2 tbsp", 30],
-    ["olive oil|oil", 120, "1 tbsp", 14],
-    ["mayonnaise|mayo", 95, "1 tbsp", 14],
-    ["ketchup", 20, "1 tbsp", 17],
-    ["salad dressing|dressing", 70, "1 tbsp", 15],
-    ["olives", 40, "10 olives", 0],
-    ["nuts|almonds|walnuts|cashews|peanuts", 170, "1 handful (30 g)", 30],
-    ["pizza|slice of pizza", 285, "1 slice", 0],
-    ["burger|hamburger|cheeseburger", 550, "1 burger", 0],
-    ["kebab|doner|döner", 650, "1 kebab in bread", 0],
-    ["gyros|gyro|pita gyros", 600, "1 pita gyros", 0],
-    ["souvlaki", 160, "1 skewer", 0],
-    ["moussaka", 550, "1 portion", 0],
-    ["spanakopita", 300, "1 piece", 0],
-    ["sandwich", 350, "1 sandwich", 0],
-    ["smørrebrød|smorrebrod|open sandwich", 250, "1 piece", 0],
-    ["sushi|sushi piece", 45, "1 piece", 0],
-    ["lasagna|lasagne", 400, "1 portion", 0],
-    ["spaghetti bolognese|bolognese", 600, "1 plate", 0],
-    ["chicken curry|curry", 450, "1 portion, no rice", 0],
-    ["soup|vegetable soup", 150, "1 bowl", 0],
-    ["chocolate|chocolate bar", 230, "1 bar (45 g)", 45],
-    ["piece of chocolate|square of chocolate", 30, "1 square", 6],
-    ["cookie|biscuit|cookies|biscuits", 70, "1 cookie", 15],
-    ["cake|slice of cake", 350, "1 slice", 0],
-    ["donut|doughnut", 260, "1 donut", 0],
-    ["muffin", 400, "1 muffin", 0],
-    ["danish pastry|wienerbrød|wienerbrod|pastry", 350, "1 pastry", 0],
-    ["ice cream", 140, "1 scoop", 0],
-    ["crisps|potato chips", 160, "1 small bag (30 g)", 30],
-    ["popcorn", 110, "1 small bowl (25 g)", 25],
-    ["protein bar", 200, "1 bar", 0],
-    ["granola bar|cereal bar", 120, "1 bar", 0]
+    // names, kcal, serving, grams, protein, carbs, fat, fibre, sugar (grams per serving)
+    ["egg|eggs|boiled egg|fried egg", 78, "1 egg", 50, 6.3, 0.6, 5.3, 0, 0.6],
+    ["scrambled eggs", 180, "2 eggs", 0, 12, 2, 13, 0, 1.5],
+    ["omelette|omelet", 250, "2-egg omelette", 0, 15, 2, 20, 0, 1.5],
+    ["bread|slice of bread|slice of toast|toast", 80, "1 slice", 30, 2.7, 14, 1, 0.8, 1.5],
+    ["wholemeal bread|whole wheat bread|brown bread|wholegrain bread", 80, "1 slice", 32, 4, 13, 1.1, 2, 1.4],
+    ["rye bread|rugbrød|rugbrod", 100, "1 slice", 45, 3, 19, 1, 3.5, 1],
+    ["bread roll|roll|bun|bolle", 150, "1 roll", 55, 5, 28, 2, 1.2, 2.5],
+    ["croissant", 230, "1 croissant", 55, 4.5, 26, 12, 1.5, 6],
+    ["bagel", 250, "1 bagel", 95, 10, 48, 1.5, 2, 5],
+    ["pita|pita bread", 170, "1 pita", 60, 5.5, 33, 1, 1.3, 0.7],
+    ["tortilla|wrap", 140, "1 tortilla", 45, 3.7, 24, 3.5, 1.5, 1],
+    ["butter", 35, "1 tsp", 5, 0, 0, 4, 0, 0],
+    ["margarine", 35, "1 tsp", 5, 0, 0, 4, 0, 0],
+    ["peanut butter", 95, "1 tbsp", 16, 3.5, 3.5, 8, 1, 1.5],
+    ["jam|marmalade", 50, "1 tbsp", 20, 0, 13, 0, 0.2, 10],
+    ["honey", 64, "1 tbsp", 21, 0, 17, 0, 0, 17],
+    ["nutella|chocolate spread", 100, "1 tbsp", 19, 1, 11, 6, 0.6, 10.5],
+    ["cheese|cheddar|slice of cheese", 80, "1 slice", 20, 5, 0.3, 6.6, 0, 0.1],
+    ["feta|feta cheese", 75, "30 g", 30, 4, 1.2, 6, 0, 1.2],
+    ["halloumi", 95, "30 g", 30, 6.5, 0.6, 7.5, 0, 0.6],
+    ["mozzarella", 85, "30 g", 30, 6.5, 0.7, 6.3, 0, 0.3],
+    ["parmesan", 40, "1 tbsp grated", 10, 3.6, 0.3, 2.8, 0, 0],
+    ["cream cheese", 50, "1 tbsp", 15, 0.9, 0.8, 5, 0, 0.5],
+    ["cottage cheese", 100, "100 g", 100, 11, 3.4, 4.3, 0, 2.7],
+    ["ham|slice of ham", 30, "1 slice", 20, 4, 0.4, 1.2, 0, 0.3],
+    ["salami", 40, "1 slice", 10, 2.2, 0.2, 3.4, 0, 0.1],
+    ["bacon|rasher of bacon", 45, "1 rasher", 10, 3, 0.1, 3.5, 0, 0],
+    ["sausage|sausages|pølse|polse", 190, "1 sausage", 70, 8, 2, 16, 0, 1],
+    ["hot dog", 290, "1 hot dog", 0, 10, 24, 17, 1, 4],
+    ["oatmeal|porridge|oats|havregrød|havregrod", 150, "1 bowl (40 g oats)", 0, 5, 27, 2.8, 4, 0.5],
+    ["muesli|granola", 200, "1 serving (50 g)", 50, 5, 33, 5, 4, 10],
+    ["cereal|cornflakes", 150, "1 bowl (40 g)", 40, 3, 34, 0.4, 1, 4],
+    ["yogurt|yoghurt|plain yogurt", 100, "1 small pot (150 g)", 150, 5.5, 7, 5, 0, 7],
+    ["greek yogurt|greek yoghurt", 145, "150 g", 150, 13.5, 6, 7.5, 0, 6],
+    ["skyr", 95, "150 g", 150, 16.5, 6, 0.3, 0, 6],
+    ["milk|glass of milk", 120, "1 glass (250 ml)", 250, 8.5, 12, 4.8, 0, 12],
+    ["skimmed milk|skim milk", 85, "1 glass (250 ml)", 250, 8.5, 12.5, 0.3, 0, 12.5],
+    ["oat milk", 110, "1 glass (250 ml)", 250, 2.5, 16, 4, 2, 10],
+    ["coffee|black coffee|espresso|americano", 2, "1 cup", 0, 0.3, 0, 0, 0, 0],
+    ["coffee with milk|latte|cafe latte|flat white", 120, "1 cup", 0, 7, 10, 5, 0, 10],
+    ["cappuccino", 90, "1 cup", 0, 5, 7, 4, 0, 7],
+    ["tea", 2, "1 cup", 0, 0, 0.5, 0, 0, 0],
+    ["sugar|teaspoon of sugar", 16, "1 tsp", 4, 0, 4, 0, 0, 4],
+    ["orange juice|juice|apple juice", 110, "1 glass (250 ml)", 250, 1.5, 26, 0.3, 0.5, 21],
+    ["cola|coke|soda|soft drink", 140, "1 can (330 ml)", 0, 0, 35, 0, 0, 35],
+    ["diet coke|coke zero|diet soda|pepsi max|cola zero", 1, "1 can", 0, 0, 0, 0, 0, 0],
+    ["beer|øl|ol", 150, "1 bottle (330 ml)", 0, 1.5, 12, 0, 0, 0.3],
+    ["wine|glass of wine|red wine|white wine", 125, "1 glass (150 ml)", 0, 0.1, 4, 0, 0, 1.2],
+    ["smoothie", 180, "1 glass (250 ml)", 250, 2, 40, 1, 3, 32],
+    ["protein shake", 150, "1 shake", 0, 25, 6, 2.5, 1, 3],
+    ["water|sparkling water", 0, "1 glass", 0, 0, 0, 0, 0, 0],
+    ["apple|apples", 95, "1 apple", 180, 0.5, 25, 0.3, 4.4, 19],
+    ["banana|bananas", 105, "1 banana", 120, 1.3, 27, 0.4, 3.1, 14],
+    ["orange|oranges", 60, "1 orange", 130, 1.2, 15, 0.2, 3, 12],
+    ["pear", 100, "1 pear", 180, 0.6, 27, 0.2, 5.5, 17],
+    ["grapes", 70, "1 handful (100 g)", 100, 0.7, 18, 0.2, 0.9, 16],
+    ["strawberries", 35, "1 cup (110 g)", 110, 0.7, 8.5, 0.3, 2.2, 5.4],
+    ["blueberries", 85, "1 cup (150 g)", 150, 1.1, 21, 0.5, 3.6, 15],
+    ["watermelon", 45, "1 slice (150 g)", 150, 0.9, 11, 0.2, 0.6, 9],
+    ["melon", 50, "1 slice (150 g)", 150, 1.3, 12, 0.3, 1.4, 12],
+    ["kiwi", 45, "1 kiwi", 75, 0.8, 11, 0.4, 2.3, 7],
+    ["peach|nectarine", 60, "1 fruit", 150, 1.4, 14, 0.4, 2.3, 12],
+    ["mango", 100, "1 cup (165 g)", 165, 1.4, 25, 0.6, 2.6, 23],
+    ["dates", 66, "1 date", 24, 0.4, 18, 0, 1.6, 16],
+    ["raisins", 85, "1 small handful (30 g)", 30, 0.9, 23, 0.1, 1.1, 18],
+    ["avocado", 240, "1 avocado", 150, 3, 13, 22, 10, 1],
+    ["tomato|tomatoes", 20, "1 tomato", 120, 1, 4.7, 0.2, 1.4, 3.2],
+    ["cucumber", 15, "half a cucumber", 150, 1, 3.3, 0.2, 0.8, 2.5],
+    ["carrot|carrots", 25, "1 carrot", 60, 0.6, 6, 0.1, 1.7, 2.9],
+    ["salad|green salad|side salad", 50, "1 side salad, no dressing", 0, 2, 9, 0.5, 3, 4],
+    ["greek salad|horiatiki", 300, "1 bowl", 0, 8, 12, 25, 4, 7],
+    ["caesar salad", 400, "1 bowl", 0, 18, 15, 30, 3, 3],
+    ["broccoli", 35, "1 cup (90 g)", 90, 2.5, 6, 0.4, 2.4, 1.5],
+    ["spinach", 7, "1 cup raw", 30, 0.9, 1.1, 0.1, 0.7, 0.1],
+    ["vegetables|veggies|mixed vegetables", 60, "1 cup cooked", 0, 3, 12, 0.5, 4, 4],
+    ["potato|potatoes|boiled potatoes", 130, "1 medium potato", 170, 3, 30, 0.2, 2.5, 1.5],
+    ["baked potato|jacket potato", 160, "1 medium", 170, 4.3, 37, 0.2, 3.8, 2],
+    ["mashed potatoes|mash", 210, "1 cup", 210, 4, 35, 7, 3, 3],
+    ["fries|chips|french fries|pommes frites", 365, "1 medium portion", 115, 4, 48, 17, 4.4, 0.3],
+    ["sweet potato", 115, "1 medium", 130, 2, 27, 0.2, 4, 5.5],
+    ["rice|white rice|cooked rice", 205, "1 cup cooked", 160, 4.3, 45, 0.4, 0.6, 0.1],
+    ["brown rice", 215, "1 cup cooked", 195, 5, 45, 1.8, 3.5, 0.7],
+    ["pasta|spaghetti|penne|noodles", 220, "1 cup cooked", 140, 8, 43, 1.3, 2.5, 0.8],
+    ["couscous", 175, "1 cup cooked", 155, 6, 36, 0.3, 2.2, 0.2],
+    ["quinoa", 220, "1 cup cooked", 185, 8, 39, 3.6, 5, 1.6],
+    ["chicken breast|chicken|grilled chicken", 165, "100 g cooked", 100, 31, 0, 3.6, 0, 0],
+    ["chicken thigh", 210, "100 g cooked", 100, 26, 0, 11, 0, 0],
+    ["turkey", 150, "100 g cooked", 100, 29, 0, 3, 0, 0],
+    ["beef|steak", 250, "100 g cooked", 100, 26, 0, 16, 0, 0],
+    ["minced beef|ground beef|mince", 250, "100 g cooked", 100, 25, 0, 16, 0, 0],
+    ["pork|pork chop", 240, "100 g cooked", 100, 27, 0, 14, 0, 0],
+    ["meatballs|frikadeller|keftedes", 75, "1 meatball", 30, 4.5, 2, 5.5, 0.1, 0.4],
+    ["lamb", 280, "100 g cooked", 100, 25, 0, 20, 0, 0],
+    ["salmon", 210, "100 g cooked", 100, 22, 0, 13, 0, 0],
+    ["tuna|canned tuna", 110, "1 small can drained (100 g)", 100, 25, 0, 1, 0, 0],
+    ["cod|white fish|fish", 105, "100 g cooked", 100, 23, 0, 0.9, 0, 0],
+    ["shrimp|prawns", 100, "100 g cooked", 100, 24, 0.2, 0.3, 0, 0],
+    ["herring|sild", 160, "1 serving (60 g)", 60, 8, 6, 11, 0, 5],
+    ["tofu", 145, "100 g", 100, 15.5, 3, 8.7, 2, 0.6],
+    ["beans|kidney beans|chickpeas", 220, "1 cup cooked", 170, 14, 39, 1.5, 12, 1],
+    ["lentils", 230, "1 cup cooked", 200, 18, 40, 0.8, 15.6, 3.6],
+    ["hummus", 70, "2 tbsp", 30, 2, 4, 5, 1.8, 0.1],
+    ["tzatziki", 40, "2 tbsp", 30, 1.5, 1.5, 3, 0.1, 1.2],
+    ["olive oil|oil", 120, "1 tbsp", 14, 0, 0, 14, 0, 0],
+    ["mayonnaise|mayo", 95, "1 tbsp", 14, 0.1, 0.1, 10.3, 0, 0.1],
+    ["ketchup", 20, "1 tbsp", 17, 0.2, 4.7, 0, 0.1, 3.7],
+    ["salad dressing|dressing", 70, "1 tbsp", 15, 0.1, 2, 7, 0, 1.5],
+    ["olives", 40, "10 olives", 0, 0.3, 2, 4, 1, 0],
+    ["nuts|almonds|walnuts|cashews|peanuts", 170, "1 handful (30 g)", 30, 6, 6, 15, 3, 1.2],
+    ["pizza|slice of pizza", 285, "1 slice", 0, 12, 36, 10, 2.5, 4],
+    ["burger|hamburger|cheeseburger", 550, "1 burger", 0, 28, 40, 30, 2, 8],
+    ["kebab|doner|döner", 650, "1 kebab in bread", 0, 32, 55, 33, 4, 6],
+    ["gyros|gyro|pita gyros", 600, "1 pita gyros", 0, 28, 55, 30, 4, 5],
+    ["souvlaki", 160, "1 skewer", 0, 20, 1, 8, 0, 0.5],
+    ["moussaka", 550, "1 portion", 0, 25, 30, 36, 6, 9],
+    ["spanakopita", 300, "1 piece", 0, 9, 22, 20, 2, 2],
+    ["sandwich", 350, "1 sandwich", 0, 18, 38, 13, 3, 5],
+    ["smørrebrød|smorrebrod|open sandwich", 250, "1 piece", 0, 11, 22, 13, 4, 2],
+    ["sushi|sushi piece", 45, "1 piece", 0, 2, 7.5, 0.6, 0.2, 1.5],
+    ["lasagna|lasagne", 400, "1 portion", 0, 22, 35, 19, 3, 7],
+    ["spaghetti bolognese|bolognese", 600, "1 plate", 0, 30, 75, 18, 6, 10],
+    ["chicken curry|curry", 450, "1 portion, no rice", 0, 32, 15, 28, 3, 7],
+    ["soup|vegetable soup", 150, "1 bowl", 0, 5, 22, 4, 5, 7],
+    ["chocolate|chocolate bar", 230, "1 bar (45 g)", 45, 3, 26, 13, 1.5, 24],
+    ["piece of chocolate|square of chocolate", 30, "1 square", 6, 0.4, 3.4, 1.8, 0.4, 3],
+    ["cookie|biscuit|cookies|biscuits", 70, "1 cookie", 15, 0.8, 10, 3, 0.3, 5],
+    ["cake|slice of cake", 350, "1 slice", 0, 4, 50, 15, 1, 35],
+    ["donut|doughnut", 260, "1 donut", 0, 3.5, 30, 14, 1, 13],
+    ["muffin", 400, "1 muffin", 0, 6, 55, 18, 1.5, 30],
+    ["danish pastry|wienerbrød|wienerbrod|pastry", 350, "1 pastry", 0, 5, 40, 19, 1, 18],
+    ["ice cream", 140, "1 scoop", 0, 2.4, 16, 7.5, 0.5, 14],
+    ["crisps|potato chips", 160, "1 small bag (30 g)", 30, 2, 15, 10, 1.3, 0.2],
+    ["popcorn", 110, "1 small bowl (25 g)", 25, 3, 19, 3, 3.5, 0.2],
+    ["protein bar", 200, "1 bar", 0, 20, 22, 7, 5, 3],
+    ["granola bar|cereal bar", 120, "1 bar", 0, 2, 20, 4, 1.5, 8]
   ];
+
 
   var NUMBER_WORDS = { a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, half: 0.5, couple: 2, few: 3, some: 1, several: 3, "a couple of": 2, "a few": 3, "half a": 0.5, "half an": 0.5 };
   var FOOD_INDEX = (function () {
     var list = [];
     FOODS.forEach(function (f) {
       var names = f[0].split("|");
-      names.forEach(function (n) { list.push({ alias: n, food: { name: names[0], kcal: f[1], serving: f[2], grams: f[3] } }); });
+      var mac = { p: f[4], c: f[5], f: f[6], fib: f[7], sug: f[8] };
+      names.forEach(function (n) { list.push({ alias: n, food: { name: names[0], kcal: f[1], serving: f[2], grams: f[3], m: mac } }); });
     });
     // longest names first so "coffee with milk" beats "coffee"
     return list.sort(function (a, b) { return b.alias.length - a.alias.length; });
@@ -783,7 +835,7 @@ details.manual[open] summary::after { content: "\2212"; }
       var mn = meals[i].name.toLowerCase();
       if (mn && (c === mn || containsWord(c, mn) || c.indexOf(mn) > -1)) {
         return { exact: true, items: meals[i].items.map(function (it) {
-          return { name: it.name, cal: Math.round(it.cal * q.qty), portion: q.qty !== 1 ? "x" + q.qty : "", from: "meal" };
+          return { name: it.name, cal: Math.round(it.cal * q.qty), m: scaleM(it.m, q.qty), portion: q.qty !== 1 ? "x" + q.qty : "", from: "meal" };
         }) };
       }
     }
@@ -792,7 +844,7 @@ details.manual[open] summary::after { content: "\2212"; }
     for (var k = 0; k < known.length; k++) {
       var kn = known[k].name.toLowerCase();
       if (kn.length > 2 && (c === kn || c.replace(/^(\d+|a|an|one)\s+/, "") === kn)) {
-        return { exact: true, items: [{ name: known[k].name, cal: Math.round(known[k].cal * q.qty), portion: q.qty !== 1 ? "x" + q.qty : "", from: "history" }] };
+        return { exact: true, items: [{ name: known[k].name, cal: Math.round(known[k].cal * q.qty), m: scaleM(known[k].m, q.qty), portion: q.qty !== 1 ? "x" + q.qty : "", from: "history" }] };
       }
     }
     // 3) the built-in list
@@ -803,10 +855,24 @@ details.manual[open] summary::after { content: "\2212"; }
         if (q.grams && f.grams) { cal = f.kcal * q.grams / f.grams; portion = q.grams + (/ml/.test(c) ? " ml" : " g"); }
         else { cal = f.kcal * q.qty; portion = (q.qty === 1 ? "" : fmtQty(q.qty) + " × ") + f.serving; }
         var shown = q.grams && f.grams ? capital(f.name) : (q.qty === 1 ? "" : fmtQty(q.qty) + " × ") + capital(f.name);
-        return { exact: c.replace(/^[\d\s.,/]+|^(a|an|one|two|three|four|five|half)\s+/g, "").trim() === e.alias, items: [{ name: shown, cal: Math.round(cal), portion: portion, from: "list" }] };
+        return { exact: c.replace(/^[\d\s.,/]+|^(a|an|one|two|three|four|five|half)\s+/g, "").trim() === e.alias, items: [{ name: shown, cal: Math.round(cal), m: scaleM(f.m, f.kcal ? cal / f.kcal : q.qty), portion: portion, from: "list" }] };
       }
     }
     return null;
+  }
+  // Nutrients: m = {p: protein, c: carbs, f: fat, fib: fibre, sug: sugar} in grams
+  function scaleM(m, k) {
+    if (!m) return null;
+    return { p: r1(m.p * k), c: r1(m.c * k), f: r1(m.f * k), fib: r1(m.fib * k), sug: r1(m.sug * k) };
+  }
+  function r1(n) { return Math.round((+n || 0) * 10) / 10; }
+  function sumM(list) {
+    var t = { p: 0, c: 0, f: 0, fib: 0, sug: 0 }, missing = 0;
+    list.forEach(function (i) {
+      if (!i.m) { if ((+i.cal || 0) > 0) missing++; return; }
+      t.p += +i.m.p || 0; t.c += +i.m.c || 0; t.f += +i.m.f || 0; t.fib += +i.m.fib || 0; t.sug += +i.m.sug || 0;
+    });
+    return { t: scaleM(t, 1), missing: missing };
   }
   function fmtQty(n) { return n === 0.5 ? "½" : String(Math.round(n * 100) / 100); }
 
@@ -997,8 +1063,11 @@ details.manual[open] summary::after { content: "\2212"; }
     bar.style.strokeDashoffset = C * (1 - frac);
     bar.style.stroke = left < 0 ? "var(--warn)" : "var(--accent)";
 
+    renderMacros(entries, goal);
+
     var wrap = $("mealsList");
     wrap.textContent = "";
+    var dayNotes = (state.notes && state.notes[key]) || [];
     if (!entries.length) {
       var p = document.createElement("p"); p.className = "empty";
       p.textContent = "Nothing logged yet. Tell me what you ate above.";
@@ -1022,11 +1091,71 @@ details.manual[open] summary::after { content: "\2212"; }
         x.setAttribute("aria-label", "Remove " + e.name); x.setAttribute("data-del", e.id);
         li.appendChild(n); li.appendChild(c); li.appendChild(x); ul.appendChild(li);
       });
-      box.appendChild(ul); wrap.appendChild(box);
+      box.appendChild(ul);
+      var ids = {};
+      list.forEach(function (e) { if (e.note) ids[e.note] = true; });
+      dayNotes.forEach(function (n) { if (ids[n.id] && n.rating) box.appendChild(noteEl(n)); });
+      wrap.appendChild(box);
     });
 
     renderSuggestions();
     renderRegulars();
+  }
+
+  function macroTargets(goal) {
+    var w = state.profile && +state.profile.weightKg;
+    var p = w ? Math.min(170, Math.max(70, Math.round(1.4 * w))) : Math.round(goal * 0.25 / 4);
+    return { p: p, c: Math.round(goal * 0.45 / 4), f: Math.round(goal * 0.30 / 9), fib: Math.max(20, Math.round(goal / 1000 * 14)), sug: Math.round(goal * 0.10 / 4) };
+  }
+
+  function renderMacros(entries, goal) {
+    var s = sumM(entries), t = s.t, tg = macroTargets(goal || 2000);
+    var rows = [
+      ["Protein", t.p, tg.p, "aim", false],
+      ["Carbs", t.c, tg.c, "about", true],
+      ["Fat", t.f, tg.f, "about", true],
+      ["Fibre", t.fib, tg.fib, "aim", false],
+      ["Sugar", t.sug, tg.sug, "under", true]
+    ];
+    var box = $("macroBars");
+    box.textContent = "";
+    rows.forEach(function (r) {
+      var row = document.createElement("div"); row.className = "mrow";
+      var n = document.createElement("span"); n.className = "mname"; n.textContent = r[0];
+      var bar = document.createElement("div"); bar.className = "mbar";
+      var fill = document.createElement("span");
+      fill.style.width = Math.min(100, r[2] ? r[1] / r[2] * 100 : 0) + "%";
+      if (r[4] && r[1] > r[2] * 1.05) fill.className = "warn";
+      bar.appendChild(fill);
+      var v = document.createElement("b"); v.textContent = Math.round(r[1]) + " / " + r[2] + " g";
+      row.appendChild(n); row.appendChild(bar); row.appendChild(v);
+      row.setAttribute("aria-label", r[0] + ": " + Math.round(r[1]) + " grams, " + r[3] + " " + r[2] + " grams");
+      box.appendChild(row);
+    });
+    var note = "Targets: protein and fibre to reach, carbs and fat about right, sugar to stay under.";
+    if (s.missing) note += " " + s.missing + (s.missing === 1 ? " food has" : " foods have") + " no nutrient details, so these totals are a bit low.";
+    $("macroNote").textContent = note;
+  }
+
+  function noteEl(n) {
+    var d = document.createElement("details"); d.className = "mealnote";
+    var sm = document.createElement("summary");
+    var pill = document.createElement("span"); pill.className = "pill " + (RATING[n.rating] || RATING.okay).cls; pill.textContent = (RATING[n.rating] || RATING.okay).label;
+    var tt = document.createElement("span"); tt.textContent = n.title + (n.summary ? ": " + n.summary : "");
+    sm.appendChild(pill); sm.appendChild(tt); d.appendChild(sm);
+    if (n.m) {
+      var mm = document.createElement("div"); mm.className = "mtotal"; mm.style.textAlign = "left";
+      mm.textContent = "Protein " + fmtG(n.m.p) + " · Carbs " + fmtG(n.m.c) + " · Fat " + fmtG(n.m.f) + " · Fibre " + fmtG(n.m.fib) + " · Sugar " + fmtG(n.m.sug);
+      d.appendChild(mm);
+    }
+    if (n.points && n.points.length) {
+      var ul = document.createElement("ul"); ul.style.margin = "6px 0 0"; ul.style.paddingLeft = "18px";
+      n.points.forEach(function (pt) { var li = document.createElement("li"); li.textContent = pt; ul.appendChild(li); });
+      d.appendChild(ul);
+    }
+    if (n.tip) { var tp = document.createElement("p"); tp.style.margin = "6px 0 0"; tp.textContent = "Tip: " + n.tip; d.appendChild(tp); }
+    if (KEEP[n.keep]) { var k = document.createElement("p"); k.style.margin = "6px 0 0"; k.style.fontWeight = "600"; k.textContent = KEEP[n.keep]; d.appendChild(k); }
+    return d;
   }
 
   function knownFoods() {
@@ -1037,7 +1166,7 @@ details.manual[open] summary::after { content: "\2212"; }
         if (!n) return;
         var id = n.toLowerCase();
         var prev = map[id];
-        map[id] = { name: n, cal: e.cal, count: (prev ? prev.count : 0) + 1, last: k };
+        map[id] = { name: n, cal: e.cal, m: e.m || (prev && prev.m) || null, count: (prev ? prev.count : 0) + 1, last: k };
       });
     });
     return Object.keys(map).map(function (k) { return map[k]; });
@@ -1057,7 +1186,7 @@ details.manual[open] summary::after { content: "\2212"; }
       var nm = document.createElement("span"); nm.textContent = f.name + " ";
       var c = document.createElement("b"); c.textContent = fmt(f.cal);
       b.appendChild(nm); b.appendChild(c);
-      b.addEventListener("click", function () { addEntries([{ name: f.name, cal: f.cal }], $("foodMeal").value); toast("Added " + f.name); });
+      b.addEventListener("click", function () { addEntries([{ name: f.name, cal: f.cal, m: f.m }], $("foodMeal").value); toast("Added " + f.name); });
       q.appendChild(b);
     });
     $("quickWrap").classList.toggle("hidden", !top.length);
@@ -1073,10 +1202,13 @@ details.manual[open] summary::after { content: "\2212"; }
       b.type = "button"; b.className = "mealchip";
       var total = m.items.reduce(function (s, it) { return s + (+it.cal || 0); }, 0);
       var t = document.createElement("b"); t.textContent = m.name;
-      var s = document.createElement("small"); s.textContent = fmt(total) + " kcal · " + m.items.length + (m.items.length === 1 ? " item" : " items");
+      var v = state.verdicts[m.name.toLowerCase()];
+      var s = document.createElement("small"); s.textContent = fmt(total) + " kcal · " + (v ? RATING[v.rating].label : m.items.length + (m.items.length === 1 ? " item" : " items"));
       b.appendChild(t); b.appendChild(s);
       b.addEventListener("click", function () {
-        addEntries(m.items, guessMeal());
+        var v = judgeMeal(m.items);
+        var note = makeNote(m.name, guessMeal(), m.items, v);
+        addEntries(m.items, guessMeal(), note.id);
         m.uses = (m.uses || 0) + 1;
         saveMeals();
         toast("Added " + m.name);
@@ -1085,9 +1217,14 @@ details.manual[open] summary::after { content: "\2212"; }
     });
   }
 
-  function addEntries(items, meal) {
+  function addEntries(items, meal, noteId) {
     var key = dateKey(viewDate);
-    var add = items.map(function (it) { return { id: uidGen(), name: String(it.name).slice(0, 80), cal: Math.max(0, Math.round(+it.cal || 0)), meal: meal }; });
+    var add = items.map(function (it) {
+      var e = { id: uidGen(), name: String(it.name).slice(0, 80), cal: Math.max(0, Math.round(+it.cal || 0)), meal: meal };
+      if (it.m) e.m = scaleM(it.m, 1);
+      if (noteId) e.note = noteId;
+      return e;
+    });
     state.log[key] = entriesFor(key).concat(add);
     saveDay(key);
     renderTracker();
@@ -1109,7 +1246,10 @@ details.manual[open] summary::after { content: "\2212"; }
     err.textContent = "";
     if (!name) { err.textContent = "Type what you ate."; $("foodName").focus(); return; }
     if (isNaN(cal) || cal < 0 || cal > 10000) { err.textContent = "Enter how many calories it had (a number)."; $("foodCal").focus(); return; }
-    addEntries([{ name: name, cal: cal }], $("foodMeal").value);
+    var guess = knownFoods().filter(function (f) { return f.name.toLowerCase() === name.toLowerCase(); })[0];
+    if (!guess) { var mm = matchOne(name.toLowerCase()); if (mm && mm.items.length === 1) guess = mm.items[0]; }
+    var m = guess && guess.m && guess.cal ? scaleM(guess.m, cal / guess.cal) : null;
+    addEntries([{ name: name, cal: cal, m: m }], $("foodMeal").value);
     $("foodName").value = ""; $("foodCal").value = "";
     toast("Added " + name);
   });
@@ -1132,6 +1272,7 @@ details.manual[open] summary::after { content: "\2212"; }
 
   // ---------- Assistant: talk, photos, Claude ----------
   var sample = null, imageLimits = null, dictation = null;
+  var inClaude = !!(window.claude && window.claude.use);
   var photos = [];          // File/Blob list for this meal
   var turns = [];           // conversation with Claude for this meal
   var review = null;        // { items:[{name, cal, portion}], source, suggestedName }
@@ -1147,7 +1288,10 @@ details.manual[open] summary::after { content: "\2212"; }
     "Keep \"reply\" to one or two friendly, plain sentences: what you counted and any assumption. No lectures about diet.",
     "If the photo shows no food, return no items and say so in \"reply\".",
     "Reply with only a JSON object of this shape, nothing else:",
-    '{"reply": string, "question": string or null, "meal_name": string (a short name for this meal, e.g. "Chicken salad lunch"), "items": [{"name": string, "portion": string, "calories": number}]}'
+    "For every item also estimate protein, carbohydrate, fat, fibre and sugar in grams for that portion.",
+    "Then judge the whole meal for someone losing weight: protein for its calories (fullness, keeping muscle), fibre, sugar, fat, and whether the portion suits a daily goal of about " + (state.goal || 2000) + " kcal. Be honest and encouraging, never preachy.",
+    "rating is one of: great, good, okay, poor. keep is one of: yes, sometimes, less. verdict_points are 2 to 4 short facts with numbers (e.g. \"32 g protein, that's a lot for 450 kcal\"). tip is one practical swap or addition, or empty if none is needed.",
+    '{"reply": string, "question": string or null, "meal_name": string (a short name for this meal, e.g. "Chicken salad lunch"), "items": [{"name": string, "portion": string, "calories": number, "protein_g": number, "carbs_g": number, "fat_g": number, "fiber_g": number, "sugar_g": number}], "verdict": {"rating": string, "keep": string, "summary": string, "verdict_points": [string], "tip": string}}'
   ].join("\n");
 
   function contextBlock() {
@@ -1184,7 +1328,8 @@ details.manual[open] summary::after { content: "\2212"; }
   function normalizeItems(raw) {
     if (!Array.isArray(raw)) return [];
     return raw.map(function (it) {
-      return { name: String(it && it.name || "Food").slice(0, 80), portion: String(it && it.portion || "").slice(0, 80), cal: Math.max(0, Math.round(+(it && it.calories) || 0)) };
+      var m = it && it.protein_g != null ? { p: r1(Math.max(0, +it.protein_g || 0)), c: r1(Math.max(0, +it.carbs_g || 0)), f: r1(Math.max(0, +it.fat_g || 0)), fib: r1(Math.max(0, +it.fiber_g || 0)), sug: r1(Math.max(0, +it.sugar_g || 0)) } : null;
+      return { name: String(it && it.name || "Food").slice(0, 80), portion: String(it && it.portion || "").slice(0, 80), cal: Math.max(0, Math.round(+(it && it.calories) || 0)), m: m };
     }).filter(function (it) { return it.name; });
   }
 
@@ -1211,7 +1356,7 @@ details.manual[open] summary::after { content: "\2212"; }
       turns.push({ role: "assistant", content: JSON.stringify(data) });
       var msg = String(data && data.reply || "");
       if (data && data.question) msg += (msg ? " " : "") + String(data.question);
-      showReview({ items: items, source: photos.length ? "Estimated by Claude from your photo" : "Estimated by Claude", suggestedName: String(data && data.meal_name || "") }, msg);
+      showReview({ items: items, source: photos.length ? "Estimated by Claude from your photo" : "Estimated by Claude", suggestedName: String(data && data.meal_name || ""), claudeVerdict: cleanVerdict(data && data.verdict) }, msg);
       $("replyLabel").textContent = data && data.question ? "Your answer" : "Anything to correct or add?";
       setStatus("");
     }).catch(function (e) {
@@ -1256,11 +1401,18 @@ details.manual[open] summary::after { content: "\2212"; }
       var n = document.createElement("div"); n.className = "rname";
       n.textContent = it.name;
       if (it.portion) { var s = document.createElement("small"); s.textContent = it.portion; n.appendChild(s); }
+      if (it.m) { var mm = document.createElement("span"); mm.className = "macro"; mm.textContent = "P " + fmtG(it.m.p) + " · C " + fmtG(it.m.c) + " · F " + fmtG(it.m.f) + " · Fibre " + fmtG(it.m.fib); n.appendChild(mm); }
       var inp = document.createElement("input");
       inp.type = "number"; inp.inputMode = "numeric"; inp.min = "0"; inp.max = "10000"; inp.value = it.unknown && !it.cal ? "" : it.cal; inp.placeholder = "kcal";
       inp.id = "rcal-" + i;
       inp.setAttribute("aria-label", "Calories for " + it.name);
-      inp.addEventListener("input", function () { it.cal = Math.max(0, Math.round(+inp.value || 0)); updateTotal(); });
+      inp.addEventListener("input", function () {
+        var nv = Math.max(0, Math.round(+inp.value || 0));
+        if (it.m && it.cal > 0 && nv > 0) it.m = scaleM(it.m, nv / it.cal);
+        it.cal = nv;
+        review.claudeVerdict = null; // numbers changed, so judge again
+        updateTotal();
+      });
       var x = document.createElement("button"); x.type = "button"; x.className = "btn-danger"; x.textContent = "✕";
       x.setAttribute("aria-label", "Remove " + it.name);
       x.addEventListener("click", function () { review.items.splice(i, 1); renderReview(); });
@@ -1273,6 +1425,99 @@ details.manual[open] summary::after { content: "\2212"; }
   function updateTotal() {
     var t = review.items.reduce(function (s, i) { return s + (+i.cal || 0); }, 0);
     $("reviewTotal").textContent = fmt(t) + " kcal";
+    var sm = sumM(review.items);
+    $("reviewMacros").textContent = review.items.length ? "Protein " + fmtG(sm.t.p) + " · Carbs " + fmtG(sm.t.c) + " · Fat " + fmtG(sm.t.f) + " · Fibre " + fmtG(sm.t.fib) + " · Sugar " + fmtG(sm.t.sug) + (sm.missing ? " (not counting " + sm.missing + " item" + (sm.missing > 1 ? "s" : "") + " without nutrient info)" : "") : "";
+    renderVerdict();
+  }
+  function fmtG(n) { return (Math.round((+n || 0) * 10) / 10).toLocaleString() + " g"; }
+
+  // ---------- Meal verdict ----------
+  var RATING = {
+    great: { label: "Great choice", cls: "great" },
+    good: { label: "Good choice", cls: "good" },
+    okay: { label: "Okay", cls: "okay" },
+    poor: { label: "Could be better", cls: "poor" }
+  };
+  var KEEP = { yes: "Keep eating it.", sometimes: "Fine now and then.", less: "Have it less often, or try the tip above." };
+
+  function cleanVerdict(v) {
+    if (!v || typeof v !== "object" || !RATING[v.rating]) return null;
+    return {
+      rating: v.rating,
+      keep: KEEP[v.keep] ? v.keep : "sometimes",
+      summary: String(v.summary || "").slice(0, 300),
+      points: Array.isArray(v.verdict_points) ? v.verdict_points.slice(0, 4).map(function (p) { return String(p).slice(0, 160); }) : [],
+      tip: String(v.tip || "").slice(0, 200),
+      by: "claude"
+    };
+  }
+
+  // Rule-based verdict used when Claude didn't judge the meal (food list, edited numbers, GitHub app).
+  function judgeMeal(items) {
+    var kcal = items.reduce(function (s, i) { return s + (+i.cal || 0); }, 0);
+    var sm = sumM(items), t = sm.t, pts = [], score = 0, tip = "";
+    var goal = state.goal || 2000;
+    if (!kcal) return null;
+    var known = items.some(function (i) { return i.m; });
+    if (!known) return { rating: "okay", keep: "sometimes", summary: "I don't have nutrient details for this, so I can only count its " + fmt(kcal) + " kcal.", points: [], tip: "", by: "rules" };
+    if (kcal < 120) {
+      var small = t.sug * 4 > kcal * 0.5 ? "poor" : "okay";
+      return { rating: small, keep: small === "poor" ? "less" : "yes", summary: "A small extra of " + fmt(kcal) + " kcal.", points: t.sug >= 8 ? [fmtG(t.sug) + " of sugar for a small snack."] : [], tip: small === "poor" ? "Fruit or a few nuts satisfy a sweet tooth with more fibre." : "", by: "rules" };
+    }
+    var pDensity = t.p * 4 / kcal; // share of calories from protein
+    if (pDensity >= 0.25) { score += 2; pts.push(fmtG(t.p) + " of protein, a lot for " + fmt(kcal) + " kcal. Protein keeps you full and protects muscle."); }
+    else if (pDensity >= 0.15) { score += 1; pts.push(fmtG(t.p) + " of protein, a decent amount."); }
+    else { score -= 1; pts.push("Only " + fmtG(t.p) + " of protein for " + fmt(kcal) + " kcal, so you may get hungry again soon."); tip = "Add some protein: eggs, Greek yogurt, skyr, chicken, fish, beans or tofu."; }
+    if (t.fib >= 6) { score += 1; pts.push(fmtG(t.fib) + " of fibre, which helps you feel full."); }
+    else if (t.fib < 2 && kcal > 250) { pts.push("Little fibre (" + fmtG(t.fib) + ")."); if (!tip) tip = "Add vegetables, fruit, beans or wholegrain bread for fibre."; }
+    if (t.sug * 4 > kcal * 0.25 && t.sug > 15) { score -= 1; pts.push(fmtG(t.sug) + " of sugar, which is a lot for one meal."); if (!tip) tip = "Swap sweet drinks or desserts for water, fruit or yogurt."; }
+    if (t.f * 9 > kcal * 0.45 && kcal > 250) { score -= 1; pts.push("Over 45% of its calories come from fat (" + fmtG(t.f) + ")."); if (!tip) tip = "Use less oil, butter or sauce, or pick a leaner cut."; }
+    if (kcal > goal * 0.45) { score -= 1; pts.push("At " + fmt(kcal) + " kcal it's almost half your daily goal."); if (!tip) tip = "A smaller portion with extra vegetables would fit your day better."; }
+    var rating = score >= 2 ? "great" : score === 1 ? "good" : score === 0 ? "okay" : "poor";
+    var keep = score >= 1 ? "yes" : score === 0 ? "sometimes" : "less";
+    var summary = { great: "A really good meal for losing weight.", good: "A good meal for losing weight.", okay: "Fine, but it could fill you up better.", poor: "Not the best choice while you're losing weight." }[rating];
+    return { rating: rating, keep: keep, summary: summary, points: pts.slice(0, 4), tip: tip, by: "rules" };
+  }
+
+  function currentVerdict() {
+    if (!review || !review.items.length) return null;
+    return review.claudeVerdict || judgeMeal(review.items);
+  }
+  function renderVerdict() {
+    var v = currentVerdict();
+    $("verdictBox").hidden = !v;
+    if (!v) return;
+    $("verdictPill").className = "pill " + RATING[v.rating].cls;
+    $("verdictPill").textContent = RATING[v.rating].label;
+    $("verdictTitle").textContent = v.by === "claude" ? "Claude's verdict" : "Verdict";
+    $("verdictText").textContent = v.summary;
+    var ul = $("verdictList"); ul.textContent = "";
+    v.points.concat(v.tip ? ["Tip: " + v.tip] : []).forEach(function (p) { var li = document.createElement("li"); li.textContent = p; ul.appendChild(li); });
+    $("verdictKeep").textContent = KEEP[v.keep];
+    var key = verdictKey();
+    var last = key && state.verdicts[key];
+    $("verdictLast").hidden = !last;
+    if (last) $("verdictLast").textContent = "Last time you had this (" + parseKey(last.date).toLocaleDateString(undefined, { day: "numeric", month: "short" }) + "): " + RATING[last.rating].label + ". " + KEEP[last.keep];
+  }
+  function verdictKey() {
+    if (!review) return "";
+    var allMeal = review.items.length && review.items.every(function (i) { return i.from === "meal"; });
+    var name = allMeal && review.mealName ? review.mealName : (review.suggestedName || "");
+    return name.trim().toLowerCase().slice(0, 60);
+  }
+  function makeNote(title, meal, items, v) {
+    var key = dateKey(viewDate);
+    var sm = sumM(items);
+    var note = { id: uidGen(), title: String(title || "Meal").slice(0, 60), meal: meal, kcal: items.reduce(function (s, i) { return s + (+i.cal || 0); }, 0), m: sm.t };
+    if (v) { note.rating = v.rating; note.keep = v.keep; note.summary = v.summary; note.points = v.points; note.tip = v.tip; }
+    state.notes[key] = (state.notes[key] || []).concat([note]);
+    if (v) {
+      state.verdicts[note.title.toLowerCase()] = { rating: v.rating, keep: v.keep, date: key };
+      var keys = Object.keys(state.verdicts);
+      if (keys.length > 300) { keys.sort(function (a, b) { return state.verdicts[a].date < state.verdicts[b].date ? -1 : 1; }).slice(0, keys.length - 300).forEach(function (k) { delete state.verdicts[k]; }); }
+      saveMeals();
+    }
+    return note;
   }
 
   function resetAssistant() {
@@ -1293,18 +1538,25 @@ details.manual[open] summary::after { content: "\2212"; }
       var local = parseLocally(text);
       if (!sample) {
         var items = local.items.concat(local.unknown.map(function (u) { return { name: capital(u.replace(/^(a|an|one)\s+/, "")), cal: 0, portion: "", unknown: true }; }));
-        showReview({ items: items, source: "From your food list", suggestedName: capital(text).slice(0, 60) },
+        var allM = items.length && items.every(function (i) { return i.from === "meal"; });
+        showReview({ items: items, source: allM ? "From your regular meals" : "From your food list", suggestedName: capital(text).slice(0, 60), mealName: allM ? regularName(text) : "" },
           local.unknown.length ? "I don't know " + (local.unknown.length === 1 ? "this one" : "these") + " yet. Type the calories (check the packet, or search the food online) and I'll remember " + (local.unknown.length === 1 ? "it" : "them") + " next time." : "");
         return;
       }
       if (local.items.length && !local.unknown.length) {
         var allMeal = local.items.every(function (i) { return i.from === "meal"; });
-        showReview({ items: local.items, source: allMeal ? "From your regular meals" : "From your food list", suggestedName: capital(text).slice(0, 60) }, "");
+        showReview({ items: local.items, source: allMeal ? "From your regular meals" : "From your food list", suggestedName: capital(text).slice(0, 60), mealName: allMeal ? regularName(text) : "" }, "");
         return;
       }
     }
     askClaude(text, null);
   });
+
+  function regularName(text) {
+    var t = text.toLowerCase();
+    var m = (state.meals || []).filter(function (x) { return t.indexOf(x.name.toLowerCase()) > -1; })[0];
+    return m ? m.name : "";
+  }
 
   $("replyBtn").addEventListener("click", function () {
     var t = $("replyText").value.trim();
@@ -1330,11 +1582,14 @@ details.manual[open] summary::after { content: "\2212"; }
     var meal = $("reviewMeal").value;
     var named = review.items.map(function (i) {
       var p = (i.portion || "").trim();
-      return { name: p && p.length < 40 && !i.from ? i.name + " (" + p + ")" : (i.from === "list" && /\d ?(g|ml)$/.test(p) ? i.name + " (" + p + ")" : i.name), cal: i.cal };
+      return { name: p && p.length < 40 && !i.from ? i.name + " (" + p + ")" : (i.from === "list" && /\d ?(g|ml)$/.test(p) ? i.name + " (" + p + ")" : i.name), cal: i.cal, m: i.m || null };
     });
-    addEntries(named, meal);
-    if ($("rememberChk").checked) {
-      var name = $("rememberName").value.trim() || review.suggestedName || "My meal";
+    var remember = $("rememberChk").checked;
+    var name = remember ? ($("rememberName").value.trim() || review.suggestedName || "My meal") : "";
+    var title = name || review.mealName || review.suggestedName || "Meal";
+    var note = makeNote(title, meal, named, currentVerdict());
+    addEntries(named, meal, note.id);
+    if (remember) {
       var existing = state.meals.filter(function (m) { return m.name.toLowerCase() === name.toLowerCase(); })[0];
       var items = named;
       if (existing) { existing.items = items; existing.uses = (existing.uses || 0) + 1; }
@@ -1405,7 +1660,12 @@ details.manual[open] summary::after { content: "\2212"; }
     $("settingsGoalInfo").textContent = info;
     $("manualGoal").value = state.goal || "";
     $("goalError").textContent = "";
-    $("dataInfo").textContent = "Everything is saved only on this phone or computer, in this browser. Nothing is sent anywhere. If you clear your browser's history and site data, it will be erased, so save a backup file now and then.";
+    $("dataInfo").textContent = inClaude
+      ? (cloud
+        ? "Your goal, log and regular meals are saved privately to your Claude account, so they show up on any phone or computer where you open this tracker. Nobody else can see them."
+        : "Your data is saved in this browser only, because your Claude account storage isn't reachable right now.")
+      : "Everything is saved only on this phone or computer, in this browser. Nothing is sent anywhere. If you clear your browser's history and site data, it will be erased, so save a backup file now and then.";
+    ["exportData", "importBtn", "dataMsg"].forEach(function (id) { $(id).hidden = inClaude; });
     $("dataMsg").textContent = "";
     var ul = $("savedList");
     ul.textContent = "";
@@ -1455,7 +1715,7 @@ details.manual[open] summary::after { content: "\2212"; }
       try {
         var s = JSON.parse(reader.result);
         if (!s || typeof s !== "object" || typeof s.log !== "object") throw new Error("bad");
-        state = { profile: s.profile || null, goal: s.goal || null, goalSource: s.goalSource || null, log: s.log || {}, meals: Array.isArray(s.meals) ? s.meals : [] };
+        state = { profile: s.profile || null, goal: s.goal || null, goalSource: s.goalSource || null, log: s.log || {}, notes: s.notes || {}, meals: Array.isArray(s.meals) ? s.meals : [], verdicts: s.verdicts || {} };
         writeLocal();
         renderSettings();
         $("dataMsg").textContent = "Backup restored.";
@@ -1560,10 +1820,78 @@ details.manual[open] summary::after { content: "\2212"; }
       t.value = t.value ? t.value + e.text : e.text.replace(/^\s+/, "");
     });
   }
-  connectSpeech();
+  function connectCloud() {
+    if (!window.claude || !window.claude.use) return;
+    Promise.all([window.claude.use("db"), window.claude.use("user")]).then(function (r) {
+      var d = r[0], u = r[1];
+      if (!d || !u) return null;
+      return u.id().then(function (id) {
+        if (!id) return;
+        db = d; uid = id;
+        var col = db.collection("data/users/" + uid);
+        var first = true;
+        col.onSnapshot(function (snap) {
+          if (snap.metadata.hasPendingWrites) return;
+          if (snap.metadata.fromCache) {
+            if (!snap.empty) { state = applyDocs(snap.docs); route(); }
+            return;
+          }
+          if (first) {
+            first = false;
+            cloud = true;
+            if (snap.empty && (state.goal || Object.keys(state.log).length)) {
+              // first visit with an account: move what's on this device up
+              save(); saveMeals(); Object.keys(state.log).forEach(saveDay);
+              return;
+            }
+          }
+          state = applyDocs(snap.docs);
+          writeLocal();
+          route();
+        }, function () { cloud = false; });
+      });
+    }).catch(function () { /* stay local */ });
+  }
+
+  function connectClaude() {
+    if (!window.claude || !window.claude.use) { $("micHint").hidden = false; return; }
+    window.claude.use("sample").then(function (s) {
+      sample = s;
+      if (!s) return;
+      return s.limits().then(function (lim) {
+        imageLimits = lim && lim.images ? lim.images : null;
+        if (imageLimits) {
+          $("photoBtn").hidden = false;
+          if (imageLimits.mediaTypes && imageLimits.mediaTypes.length) $("photoInput").accept = imageLimits.mediaTypes.join(",");
+        }
+      }).catch(function () { imageLimits = null; });
+    });
+    window.claude.use("dictation").then(function (d) {
+      dictation = d;
+      if (!d) { $("micHint").hidden = false; return; }
+      $("micBtn").hidden = false;
+      d.onState(function (e) {
+        if (e.state === "idle") {
+          micIdle();
+          if (e.reason === "not_granted" || e.reason === "unavailable") { $("micBtn").hidden = true; $("micHint").hidden = false; }
+        } else micLive();
+      });
+      d.onFinal(function (e) {
+        var t = $(micTarget);
+        t.value = t.value ? t.value + e.text : e.text.replace(/^\s+/, "");
+      });
+    });
+  }
+  if (inClaude) {
+    // Running inside Claude: Claude reads photos and dishes, and data is kept in the Claude account.
+    connectCloud();
+    connectClaude();
+  } else {
+    connectSpeech();
+  }
 
   // Lets the site work offline and be installed on a phone's home screen (only when hosted, not when opened as a file)
-  if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
+  if (!inClaude && "serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
     navigator.serviceWorker.register("sw.js").catch(function () {});
   }
 })();
